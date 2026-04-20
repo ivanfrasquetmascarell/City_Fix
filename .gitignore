@@ -1,0 +1,24 @@
+# Backend
+backend/node_modules/
+backend/.env
+backend/src/uploads/*
+!backend/src/uploads/.gitkeep
+
+# Flutter / App Movil
+appmovil/.dart_tool/
+appmovil/.flutter-plugins
+appmovil/.flutter-plugins-dependencies
+appmovil/.metadata
+appmovil/.packages
+appmovil/build/
+appmovil/linux/flutter/
+appmovil/macos/flutter/
+appmovil/windows/flutter/
+appmovil/city_fix_app.iml
+
+# Documentación (Personal)
+documentacio/
+
+# OS Files
+.DS_Store
+Thumbs.db
