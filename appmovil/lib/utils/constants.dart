@@ -7,10 +7,9 @@ class Constants {
   static String get apiUrl {
     if (kIsWeb) {
       return 'http://127.0.0.1:3000';
-    } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000';
     } else {
-      return 'http://127.0.0.1:3000';
+      // Usamos tu IP local para que el móvil real pueda conectar con el PC
+      return 'http://192.168.100.42:3000';
     }
   }
 
