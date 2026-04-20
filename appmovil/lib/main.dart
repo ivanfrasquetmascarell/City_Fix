@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/portada_pueblo_screen.dart';
 import 'screens/crear_incidencia_screen.dart';
 import 'screens/incidencia_detail_screen.dart';
 
@@ -52,6 +53,10 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/home',
+      builder: (context, state) => const PortadaPuebloScreen(),
+    ),
+    GoRoute(
+      path: '/incidencias',
       builder: (context, state) => const HomeScreen(),
     ),
     GoRoute(
@@ -61,7 +66,6 @@ final _router = GoRouter(
     GoRoute(
       path: '/incidencia/:id',
       builder: (context, state) {
-        // Obtenemos el objeto de Local en HomeScreen para no tener que hacer otro GET
         final incidencia = state.extra as Incidencia;
         return IncidenciaDetailScreen(incidencia: incidencia);
       },
