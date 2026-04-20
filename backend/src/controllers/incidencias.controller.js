@@ -17,7 +17,7 @@ const listar = async (req, res) => {
       where,
       include: {
         categoria: true,
-        usuario: { select: { id: true, nombre: true, email: true } },
+        usuario: { select: { id: true, nombre: true, email: true, rol: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -36,7 +36,7 @@ const obtener = async (req, res) => {
       where: { id: parseInt(req.params.id) },
       include: {
         categoria: true,
-        usuario: { select: { id: true, nombre: true, email: true } },
+        usuario: { select: { id: true, nombre: true, email: true, rol: true } },
       },
     });
 
@@ -105,12 +105,32 @@ const actualizar = async (req, res) => {
   }
 };
 
-// DELETE /incidencias/:id (solo admin)
+// DELETE /incidencias/:id
 const eliminar = async (req, res) => {
   try {
-    await prisma.incidencia.delete({ where: { id: parseInt(req.params.id) } });
-    res.json({ mensaje: 'Incidencia eliminada' });
+    const id = parseInt(req.params.id);
+    const incidencia = await prisma.incidencia.findUnique({ where: { id } });
+
+    if (!incidencia) {
+      return res.status(404).json({ error: 'Incidencia no encontrada' });
+    }
+
+    // Lógica de permisos
+    if (req.usuario.rol === 'ciudadano') {
+      // 1. Verificar propiedad
+      if (incidencia.usuarioId !== req.usuario.id) {
+        return res.status(403).json({ error: 'No tienes permisos para borrar esta incidencia' });
+      }
+      // 2. Verificar estado (Solo se borra si está pendiente)
+      if (incidencia.estado !== 'pendiente') {
+        return res.status(400).json({ error: 'No puedes borrar una incidencia que ya está en curso o resuelta' });
+      }
+    }
+
+    await prisma.incidencia.delete({ where: { id } });
+    res.json({ mensaje: 'Incidencia eliminada con éxito' });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

@@ -33,6 +33,6 @@ router.get('/', authMiddleware, listar);
 router.get('/:id', authMiddleware, obtener);
 router.post('/', authMiddleware, upload.single('foto'), crear);
 router.put('/:id', authMiddleware, soloAdmin, actualizar);
-router.delete('/:id', authMiddleware, soloAdmin, eliminar);
+router.delete('/:id', authMiddleware, eliminar);
 
 module.exports = router;
