@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:video_player/video_player.dart';
+import 'package:lottie/lottie.dart';
 
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -164,6 +165,34 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
     }
   }
 
+  Future<void> _showSuccessDialog() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Lottie.network(
+              'https://lottie.host/84b9f30b-980b-483a-8692-23c34e9e0488/F9nK8r8c4P.json',
+              width: 200,
+              height: 200,
+              repeat: false,
+            ),
+            const Text(
+              '¡Reporte Enviado!',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.secondaryColor),
+            ),
+            const SizedBox(height: 8),
+            const Text('Gracias por mejorar tu ciudad.', textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _enviar() async {
     if (!_formKey.currentState!.validate()) return;
     if (_categoriaSeleccionada == null) {
@@ -187,10 +216,8 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
         _videoFile?.path,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Incidencia enviada con éxito'), backgroundColor: AppTheme.secondaryColor),
-        );
-        context.pop();
+        await _showSuccessDialog();
+        if (mounted) context.pop();
       }
     } catch (e) {
       if (mounted) {

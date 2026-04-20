@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../models/incidencia.dart';
 import '../theme/app_theme.dart';
+import '../widgets/custom_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -62,21 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthProvider>();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Incidencias'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              auth.logout();
-              context.go('/login');
-            },
-          ),
-        ],
       ),
+      drawer: const CustomDrawer(),
       body: RefreshIndicator(
         onRefresh: () async => _loadData(),
         child: FutureBuilder<List<Incidencia>>(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
+import '../widgets/custom_drawer.dart';
 
 class PortadaPuebloScreen extends StatelessWidget {
   const PortadaPuebloScreen({super.key});
@@ -9,6 +10,13 @@ class PortadaPuebloScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppTheme.primaryColor, size: 28),
+      ),
+      drawer: const CustomDrawer(),
       body: Stack(
         children: [
           // Fondo con degradado suave o imagen
