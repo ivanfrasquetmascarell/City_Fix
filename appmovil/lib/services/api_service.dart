@@ -64,16 +64,22 @@ class ApiService {
 
   // Incidencias (Ciudadano ve las suyas)
   Future<List<Incidencia>> getMisIncidencias(String token) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/incidencias'),
-      headers: _headers(token),
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/incidencias'),
+        headers: _headers(token),
+      );
 
-    if (response.statusCode == 200) {
-      final List list = jsonDecode(response.body);
-      return list.map((e) => Incidencia.fromJson(e)).toList();
-    } else {
-      throw Exception('Fallo al obtener tus incidencias');
+      if (response.statusCode == 200) {
+        final List list = jsonDecode(response.body);
+        return list.map((e) => Incidencia.fromJson(e)).toList();
+      } else {
+        print('DEBUG: Error del servidor (${response.statusCode}): ${response.body}');
+        throw Exception('Fallo al obtener tus incidencias');
+      }
+    } catch (e) {
+      print('DEBUG: Error en getMisIncidencias: $e');
+      rethrow;
     }
   }
 
@@ -109,6 +115,19 @@ class ApiService {
       return Incidencia.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Fallo al crear la incidencia: ${response.body}');
+    }
+  }
+
+  // Eliminar incidencia (Propia o Admin)
+  Future<void> eliminarIncidencia(String token, int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/incidencias/$id'),
+      headers: _headers(token),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body)['error'] ?? 'Error al eliminar';
+      throw Exception(error);
     }
   }
 }
