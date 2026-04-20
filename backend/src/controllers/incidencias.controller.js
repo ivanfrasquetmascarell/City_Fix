@@ -106,8 +106,12 @@ const crear = async (req, res) => {
 
     res.status(201).json(incidencia);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('CRITICAL ERROR [crear]:', err);
+    res.status(500).json({ 
+      error: 'Error interno del servidor', 
+      details: err.message, // Temporalmente para debugar
+      stack: err.stack 
+    });
   }
 };
 

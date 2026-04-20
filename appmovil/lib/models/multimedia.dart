@@ -12,10 +12,14 @@ class Multimedia {
   });
 
   factory Multimedia.fromJson(Map<String, dynamic> json) {
-    return Multimedia(
-      id: json['id'],
-      url: json['url'],
-      tipo: json['tipo'] == 'VIDEO' ? TipoMedia.VIDEO : TipoMedia.IMAGEN,
-    );
+    try {
+      return Multimedia(
+        id: json['id'] as int? ?? 0,
+        url: json['url']?.toString() ?? '',
+        tipo: (json['tipo']?.toString() == 'VIDEO') ? TipoMedia.VIDEO : TipoMedia.IMAGEN,
+      );
+    } catch (e) {
+      return Multimedia(id: 0, url: '', tipo: TipoMedia.IMAGEN);
+    }
   }
 }

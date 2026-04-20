@@ -29,25 +29,30 @@ class Incidencia {
 
   factory Incidencia.fromJson(Map<String, dynamic> json) {
     try {
-      var multimediaList = (json['multimedia'] as List?)
+      final multimediaList = (json['multimedia'] as List?)
               ?.map((m) => Multimedia.fromJson(m))
               .toList() ??
           [];
 
       return Incidencia(
-        id: json['id'],
-        titulo: json['titulo'] ?? '',
-        descripcion: json['descripcion'] ?? '',
+        id: json['id'] as int? ?? 0,
+        titulo: json['titulo']?.toString() ?? 'Sin título',
+        descripcion: json['descripcion']?.toString() ?? '',
         multimedia: multimediaList,
-        latitud: (json['latitud'] as num).toDouble(),
-        longitud: (json['longitud'] as num).toDouble(),
-        estado: json['estado'] ?? 'pendiente',
-        comentarioAdmin: json['comentarioAdmin'],
-        categoria: json['categoria'] != null ? Categoria.fromJson(json['categoria']) : null,
-        usuario: json['usuario'] != null ? Usuario.fromJson(json['usuario']) : null,
+        latitud: double.tryParse(json['latitud']?.toString() ?? '0') ?? 0.0,
+        longitud: double.tryParse(json['longitud']?.toString() ?? '0') ?? 0.0,
+        estado: json['estado']?.toString() ?? 'pendiente',
+        comentarioAdmin: json['comentarioAdmin']?.toString(),
+        categoria: json['categoria'] != null 
+            ? Categoria.fromJson(json['categoria']) 
+            : null,
+        usuario: json['usuario'] != null 
+            ? Usuario.fromJson(json['usuario']) 
+            : null,
       );
-    } catch (e) {
-      print('DEBUG: Error parseando incidencia ID ${json['id']}: $e');
+    } catch (e, stack) {
+      print('DEBUG: Error parseando incidencia: $e');
+      print('DEBUG: Stack: $stack');
       rethrow;
     }
   }

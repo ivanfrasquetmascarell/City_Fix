@@ -71,6 +71,7 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
+        print('DEBUG: Respuesta recibida del servidor: ${response.body}');
         final List list = jsonDecode(response.body);
         return list.map((e) => Incidencia.fromJson(e)).toList();
       } else {
