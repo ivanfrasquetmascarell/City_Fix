@@ -31,7 +31,10 @@ const upload = multer({
 router.get('/stats', authMiddleware, soloAdmin, stats);
 router.get('/', authMiddleware, listar);
 router.get('/:id', authMiddleware, obtener);
-router.post('/', authMiddleware, upload.single('foto'), crear);
+router.post('/', authMiddleware, upload.fields([
+  { name: 'imagenes', maxCount: 3 },
+  { name: 'video', maxCount: 1 }
+]), crear);
 router.put('/:id', authMiddleware, soloAdmin, actualizar);
 router.delete('/:id', authMiddleware, eliminar);
 

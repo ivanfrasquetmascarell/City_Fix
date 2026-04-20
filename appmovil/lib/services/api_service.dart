@@ -83,7 +83,7 @@ class ApiService {
     }
   }
 
-  // Subir Incidencia con Foto o Video (Multipart Request)
+  // Subir Incidencia con múltiples Fotos y 1 Video (Multipart Request)
   Future<Incidencia> crearIncidencia(
       String token, 
       String titulo, 
@@ -91,7 +91,8 @@ class ApiService {
       double latitud, 
       double longitud, 
       int categoriaId,
-      String? multimediaPath) async {
+      List<String> imagenesPaths,
+      String? videoPath) async {
         
     var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/incidencias'));
     request.headers.addAll({
@@ -104,8 +105,14 @@ class ApiService {
     request.fields['longitud'] = longitud.toString();
     request.fields['categoriaId'] = categoriaId.toString();
 
-    if (multimediaPath != null) {
-      request.files.add(await http.MultipartFile.fromPath('foto', multimediaPath));
+    // Añadir imágenes (hasta 3)
+    for (var path in imagenesPaths) {
+      request.files.add(await http.MultipartFile.fromPath('imagenes', path));
+    }
+
+    // Añadir vídeo (máximo 1)
+    if (videoPath != null) {
+      request.files.add(await http.MultipartFile.fromPath('video', videoPath));
     }
 
     var streamedResponse = await request.send();

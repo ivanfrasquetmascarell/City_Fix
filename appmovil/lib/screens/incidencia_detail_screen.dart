@@ -18,31 +18,39 @@ class IncidenciaDetailScreen extends StatefulWidget {
 
 class _IncidenciaDetailScreenState extends State<IncidenciaDetailScreen> {
   final ApiService _apiService = ApiService();
-  VideoPlayerController? _videoController;
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+  
+  // Mapa de controladores de video por índice
+  final Map<int, VideoPlayerController> _videoControllers = {};
   bool _isDeleting = false;
 
   @override
   void initState() {
     super.initState();
-    _initMultimedia();
+    _initVideos();
   }
 
-  void _initMultimedia() {
-    final url = widget.incidencia.fotoUrl;
-    if (url != null && (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.mov'))) {
-      _videoController = VideoPlayerController.networkUrl(
-        Uri.parse('${Constants.apiUrl}$url'),
-      )..initialize().then((_) {
-          setState(() {});
-          _videoController?.setLooping(true);
-          _videoController?.play();
-        });
+  void _initVideos() {
+    for (int i = 0; i < widget.incidencia.multimedia.length; i++) {
+      final media = widget.incidencia.multimedia[i];
+      if (media.tipo == TipoMedia.VIDEO) {
+        final controller = VideoPlayerController.networkUrl(
+          Uri.parse('${Constants.apiUrl}${media.url}'),
+        )..initialize().then((_) {
+            if (mounted) setState(() {});
+          });
+        _videoControllers[i] = controller;
+      }
     }
   }
 
   @override
   void dispose() {
-    _videoController?.dispose();
+    for (var controller in _videoControllers.values) {
+      controller.dispose();
+    }
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -110,51 +118,78 @@ class _IncidenciaDetailScreenState extends State<IncidenciaDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (inc.fotoUrl != null) ...[
-              if (_videoController != null)
-                Container(
-                  height: 300,
-                  color: Colors.black,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      if (_videoController!.value.isInitialized)
-                        AspectRatio(
-                          aspectRatio: _videoController!.value.aspectRatio,
-                          child: VideoPlayer(_videoController!),
-                        )
-                      else
-                        const CircularProgressIndicator(color: Colors.white),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _videoController!.value.isPlaying ? _videoController!.pause() : _videoController!.play();
-                          });
-                        },
-                        child: Container(
-                          color: Colors.transparent,
-                          child: Icon(
-                            _videoController!.value.isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline,
-                            color: Colors.white.withOpacity(0.5),
-                            size: 80,
-                          ),
-                        ),
+            // CARRUSEL MULTIMEDIA
+            if (inc.multimedia.isNotEmpty)
+              Stack(
+                children: [
+                  SizedBox(
+                    height: 350,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (idx) => setState(() => _currentPage = idx),
+                      itemCount: inc.multimedia.length,
+                      itemBuilder: (context, index) {
+                        final media = inc.multimedia[index];
+                        if (media.tipo == TipoMedia.VIDEO) {
+                          final controller = _videoControllers[index];
+                          return Container(
+                            color: Colors.black,
+                            child: Center(
+                              child: controller != null && controller.value.isInitialized
+                                  ? AspectRatio(
+                                      aspectRatio: controller.value.aspectRatio,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          VideoPlayer(controller),
+                                          GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                controller.value.isPlaying ? controller.pause() : controller.play();
+                                              });
+                                            },
+                                            child: Icon(
+                                              controller.value.isPlaying ? Icons.pause_circle : Icons.play_circle,
+                                              color: Colors.white.withOpacity(0.7),
+                                              size: 70,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : const CircularProgressIndicator(color: Colors.white),
+                            ),
+                          );
+                        } else {
+                          return Image.network(
+                            '${Constants.apiUrl}${media.url}',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Center(child: Icon(Icons.broken_image, size: 50, color: Colors.grey)),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  // Indicador de página
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ],
+                      child: Text(
+                        '${_currentPage + 1} / ${inc.multimedia.length}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ),
-                )
-              else
-                Container(
-                  height: 300,
-                  color: Colors.grey.shade200,
-                  child: Image.network(
-                    '${Constants.apiUrl}${inc.fotoUrl}',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Center(child: Icon(Icons.broken_image, size: 50, color: Colors.grey)),
-                  ),
-                )
-            ] else
+                ],
+              )
+            else
               Container(
                 height: 200,
                 color: Colors.grey.shade300,

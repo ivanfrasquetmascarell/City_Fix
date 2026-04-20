@@ -18,6 +18,7 @@ const listar = async (req, res) => {
       include: {
         categoria: true,
         usuario: { select: { id: true, nombre: true, email: true, rol: true } },
+        multimedia: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -37,6 +38,7 @@ const obtener = async (req, res) => {
       include: {
         categoria: true,
         usuario: { select: { id: true, nombre: true, email: true, rol: true } },
+        multimedia: true,
       },
     });
 
@@ -62,7 +64,27 @@ const crear = async (req, res) => {
   }
 
   try {
-    const fotoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    // Procesar archivos
+    const multimediaData = [];
+
+    if (req.files) {
+      if (req.files.imagenes) {
+        req.files.imagenes.forEach((file) => {
+          multimediaData.push({
+            url: `/uploads/${file.filename}`,
+            tipo: 'IMAGEN',
+          });
+        });
+      }
+      if (req.files.video) {
+        req.files.video.forEach((file) => {
+          multimediaData.push({
+            url: `/uploads/${file.filename}`,
+            tipo: 'VIDEO',
+          });
+        });
+      }
+    }
 
     const incidencia = await prisma.incidencia.create({
       data: {
@@ -72,9 +94,14 @@ const crear = async (req, res) => {
         longitud: parseFloat(longitud),
         categoriaId: parseInt(categoriaId),
         usuarioId: req.usuario.id,
-        fotoUrl,
+        multimedia: {
+          create: multimediaData,
+        },
       },
-      include: { categoria: true },
+      include: {
+        categoria: true,
+        multimedia: true,
+      },
     });
 
     res.status(201).json(incidencia);

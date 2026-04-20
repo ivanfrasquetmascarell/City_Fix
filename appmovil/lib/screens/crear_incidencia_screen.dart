@@ -32,21 +32,21 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
   bool _isLoading = false;
   
   // Multimedia
-  XFile? _multimediaFile;
-  bool _esVideo = false;
+  final List<XFile> _imageFiles = [];
+  XFile? _videoFile;
   final ImagePicker _picker = ImagePicker();
   VideoPlayerController? _videoController;
 
   // Mapa y GPS
   final MapController _mapController = MapController();
-  LatLng _selectedLocation = const LatLng(38.9666, -0.1833); // Centro por defecto (Gandía/Valencia por ejemplo)
+  LatLng _selectedLocation = const LatLng(38.9666, -0.1833); 
   bool _obteniendoUbicacion = false;
 
   @override
   void initState() {
     super.initState();
     _cargarCategorias();
-    _centrarEnMiUbicacion(); // Intenta centrar el mapa en la ubicación real al abrir
+    _centrarEnMiUbicacion();
   }
 
   @override
@@ -71,42 +71,60 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
     }
   }
 
-  // REQUERIMIENTO: Solo desde cámara. 
-  // NOTA: En Chrome/Web saldrá el explorador de archivos por limitación del navegador, pero en Android abre la cámara nativa obligatoriamente.
   Future<void> _tomarFoto() async {
+    if (_imageFiles.length >= 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Máximo 3 fotos permitidas')),
+      );
+      return;
+    }
     final XFile? file = await _picker.pickImage(source: ImageSource.camera);
     if (file != null) {
-      _videoController?.dispose();
-      _videoController = null;
       setState(() {
-        _multimediaFile = file;
-        _esVideo = false;
+        _imageFiles.add(file);
       });
     }
   }
 
   Future<void> _estrictamenteGrabarVideo() async {
+    if (_videoFile != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Solo se permite 1 vídeo por incidencia')),
+      );
+      return;
+    }
     final XFile? file = await _picker.pickVideo(
       source: ImageSource.camera,
-      maxDuration: const Duration(seconds: 10), // Limitado a 10s
+      maxDuration: const Duration(seconds: 10),
     );
     if (file != null) {
       _videoController?.dispose();
-      if (kIsWeb) {
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(file.path));
-      } else {
-        _videoController = VideoPlayerController.file(File(file.path));
-      }
+      _videoController = kIsWeb 
+          ? VideoPlayerController.networkUrl(Uri.parse(file.path))
+          : VideoPlayerController.file(File(file.path));
       
       await _videoController!.initialize();
       _videoController!.setLooping(true);
       _videoController!.play();
 
       setState(() {
-        _multimediaFile = file;
-        _esVideo = true;
+        _videoFile = file;
       });
     }
+  }
+
+  void _eliminarFoto(int index) {
+    setState(() {
+      _imageFiles.removeAt(index);
+    });
+  }
+
+  void _eliminarVideo() {
+    _videoController?.dispose();
+    _videoController = null;
+    setState(() {
+      _videoFile = null;
+    });
   }
 
   Future<void> _centrarEnMiUbicacion() async {
@@ -154,8 +172,6 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
       );
       return;
     }
-    // LA MULTIMEDIA AHORA ES OPCIONAL
-    // Eliminado el check de _multimediaFile == null
 
     setState(() => _isLoading = true);
     try {
@@ -167,13 +183,14 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
         _selectedLocation.latitude,
         _selectedLocation.longitude,
         _categoriaSeleccionada!,
-        _multimediaFile?.path, // Puede ser null
+        _imageFiles.map((f) => f.path).toList(),
+        _videoFile?.path,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Incidencia enviada correctamente'), backgroundColor: AppTheme.secondaryColor),
+          const SnackBar(content: Text('✅ Incidencia enviada con éxito'), backgroundColor: AppTheme.secondaryColor),
         );
-        context.pop(); // Vuelve al listado de inicio
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
@@ -198,7 +215,7 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Subiendo archivos al servidor... \nEsto puede tardar unos segundos.', textAlign: TextAlign.center,),
+                  Text('Subiendo archivos al servidor...', textAlign: TextAlign.center,),
                 ],
               ))
             : SingleChildScrollView(
@@ -208,85 +225,108 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // SECCIÓN DE MULTIMEDIA (OPCIONAL)
-                      const Text('1. Evidencia visual (Opcional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Container(
-                        height: 220,
-                        decoration: BoxDecoration(
-                          color: Colors.black87,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            if (_multimediaFile == null)
-                              Center(
-                                child: Text('No hay archivo\n(Puedes enviarlo sin foto)', 
-                                  textAlign: TextAlign.center, 
-                                  style: TextStyle(color: Colors.grey.shade400)
+                      // SECCIÓN DE MULTIMEDIA MEJORADA (3 FOTOS + 1 VIDEO)
+                      const Text('1. Evidencia visual (Máx: 3 fotos + 1 vídeo)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      
+                      // Previsualización de archivos seleccionados
+                      if (_imageFiles.isNotEmpty || _videoFile != null)
+                        SizedBox(
+                          height: 120,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              // Fotos
+                              ..._imageFiles.asMap().entries.map((entry) {
+                                int idx = entry.key;
+                                XFile file = entry.value;
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: kIsWeb 
+                                          ? Image.network(file.path, width: 120, height: 120, fit: BoxFit.cover)
+                                          : Image.file(File(file.path), width: 120, height: 120, fit: BoxFit.cover),
+                                      ),
+                                      Positioned(
+                                        top: 4,
+                                        right: 4,
+                                        child: GestureDetector(
+                                          onTap: () => _eliminarFoto(idx),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                              // Vídeo
+                              if (_videoFile != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        width: 120,
+                                        height: 120,
+                                        decoration: BoxDecoration(
+                                          color: Colors.black,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(Icons.videocam, color: Colors.white, size: 40),
+                                      ),
+                                      Positioned(
+                                        top: 4,
+                                        right: 4,
+                                        child: GestureDetector(
+                                          onTap: _eliminarVideo,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              )
-                            else if (_esVideo && _videoController != null && _videoController!.value.isInitialized)
-                              AspectRatio(
-                                aspectRatio: _videoController!.value.aspectRatio,
-                                child: VideoPlayer(_videoController!),
-                              )
-                            else if (!_esVideo)
-                               kIsWeb 
-                               ? Image.network(_multimediaFile!.path, fit: BoxFit.cover)
-                               : Image.file(File(_multimediaFile!.path), fit: BoxFit.cover)
-                            else
-                              const Center(child: CircularProgressIndicator(color: Colors.white)), // Cargando video
+                            ],
+                          ),
+                        ).animate().fadeIn(),
+                      
+                      if (_imageFiles.isNotEmpty || _videoFile != null) const SizedBox(height: 16),
 
-                            // Botones inferiores flotantes sobre el área negra
-                            Positioned(
-                              bottom: 10,
-                              left: 10,
-                              right: 10,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  ElevatedButton.icon(
-                                    onPressed: _tomarFoto,
-                                    icon: const Icon(Icons.camera_alt),
-                                    label: const Text('Foto'),
-                                    style: ElevatedButton.styleFrom(minimumSize: const Size(120, 48), foregroundColor: Colors.black, backgroundColor: Colors.white),
-                                  ),
-                                  ElevatedButton.icon(
-                                    onPressed: _estrictamenteGrabarVideo,
-                                    icon: const Icon(Icons.videocam),
-                                    label: const Text('Vídeo 10s'),
-                                    style: ElevatedButton.styleFrom(minimumSize: const Size(130, 48), backgroundColor: Colors.redAccent),
-                                  ),
-                                ],
-                              ),
+                      // Botones de captura
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _imageFiles.length < 3 ? _tomarFoto : null,
+                              icon: const Icon(Icons.add_a_photo),
+                              label: Text('Foto (${_imageFiles.length}/3)'),
                             ),
-
-                            // Botón de eliminar arriba a la derecha si hay archivo
-                            if (_multimediaFile != null)
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.white),
-                                  style: IconButton.styleFrom(backgroundColor: Colors.red),
-                                  onPressed: () {
-                                    _videoController?.dispose();
-                                    _videoController = null;
-                                    setState(() => _multimediaFile = null);
-                                  },
-                                ),
-                              ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _videoFile == null ? _estrictamenteGrabarVideo : null,
+                              icon: const Icon(Icons.videocam),
+                              label: Text(_videoFile == null ? 'Vídeo (0/1)' : 'Vídeo (1/1)'),
+                            ),
+                          ),
+                        ],
                       ),
+                      
                       const SizedBox(height: 24),
 
-                      // SECCIÓN DE MAPA INTERACTIVO
+                      // SECCIÓN DE MAPA
                       const Text('2. Ubicación del problema', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const Text('Arrastra el mapa para situar exactamente el marcador', style: TextStyle(fontSize: 12, color: Colors.grey)),
                       const SizedBox(height: 8),
                       Container(
                         height: 200,
@@ -311,18 +351,15 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
                               children: [
                                 TileLayer(
                                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                  userAgentPackageName: 'es.ivanfrasquet.cityfix.app',
                                 ),
                               ],
                             ),
-                            // Marcador Fijo en el centro de la pantalla
                             const Center(
                               child: Padding(
-                                padding: EdgeInsets.only(bottom: 40.0), // Elevarlo por la punta del icono
+                                padding: EdgeInsets.only(bottom: 40.0),
                                 child: Icon(Icons.location_on, size: 50, color: Colors.redAccent),
                               ),
                             ),
-                            // Botón flotante para ubicar
                             Positioned(
                               bottom: 12,
                               right: 12,
@@ -339,7 +376,6 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // FORMULARIO DATA
                       const Text('3. Detalles de la incidencia', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<int>(

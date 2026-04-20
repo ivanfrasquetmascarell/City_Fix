@@ -35,7 +35,6 @@ model Incidencia {
   id              Int      @id @default(autoincrement())
   titulo          String
   descripcion     String
-  fotoUrl         String?
   latitud         Float
   longitud        Float
   estado          Estado   @default(pendiente)
@@ -49,7 +48,24 @@ model Incidencia {
   categoria    Categoria @relation(fields: [categoriaId], references: [id])
   categoriaId  Int
 
+  multimedia   Multimedia[]
+
   @@map("incidencias")
+}
+
+model Multimedia {
+  id           Int        @id @default(autoincrement())
+  url          String
+  tipo         TipoMedia  @default(IMAGEN)
+  incidencia   Incidencia @relation(fields: [incidenciaId], references: [id], onDelete: Cascade)
+  incidenciaId Int
+
+  @@map("multimedia")
+}
+
+enum TipoMedia {
+  IMAGEN
+  VIDEO
 }
 
 enum Rol {
