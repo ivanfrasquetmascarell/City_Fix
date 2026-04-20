@@ -45,7 +45,8 @@ dependencies:
   video_player: ^2.11.1
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
-  lottie: ^3.6.0
+  lottie: ^3.3.3
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

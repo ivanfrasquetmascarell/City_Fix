@@ -9,6 +9,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:video_player/video_player.dart';
 import 'package:lottie/lottie.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -174,21 +175,42 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Lottie.network(
-              'https://lottie.host/84b9f30b-980b-483a-8692-23c34e9e0488/F9nK8r8c4P.json',
-              width: 200,
-              height: 200,
-              repeat: false,
-            ),
+            // Animación de éxito nativa (100% fiable, sin depender de internet)
+            Container(
+              width: 100,
+              height: 100,
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check, color: Colors.white, size: 60),
+            )
+                .animate()
+                .scale(duration: 600.ms, curve: Curves.elasticOut)
+                .then()
+                .shimmer(duration: 1.seconds),
             const Text(
               '¡Reporte Enviado!',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.secondaryColor),
             ),
             const SizedBox(height: 8),
             const Text('Gracias por mejorar tu ciudad.', textAlign: TextAlign.center),
-            const SizedBox(height: 20),
           ],
         ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx); // Cierra el diálogo
+              Navigator.pop(context); // Vuelve a la pantalla principal
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.secondaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('VOLVER AL INICIO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
@@ -377,7 +399,8 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
                               ),
                               children: [
                                 TileLayer(
-                                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                                  subdomains: const ['a', 'b', 'c', 'd'],
                                 ),
                               ],
                             ),

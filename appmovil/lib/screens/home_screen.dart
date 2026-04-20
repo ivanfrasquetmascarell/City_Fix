@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -74,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           future: _futureIncidencias,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return _buildSkeleton();
             }
 
             if (snapshot.hasError) {
@@ -148,9 +149,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Center(
-                              child: Text(
-                                inc.categoria?.icono ?? '📌',
-                                style: const TextStyle(fontSize: 24),
+                              child: Hero(
+                                tag: 'cat_${inc.id}',
+                                child: Text(
+                                  inc.categoria?.icono ?? '📌',
+                                  style: const TextStyle(fontSize: 24, decoration: TextDecoration.none),
+                                ),
                               ),
                             ),
                           ),
@@ -207,6 +211,27 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text('Reportar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ).animate().scale(delay: 500.ms),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey.shade300,
+          highlightColor: Colors.grey.shade100,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        );
+      },
     );
   }
 }

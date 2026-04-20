@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import '../models/incidencia.dart';
+import '../models/multimedia.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../utils/constants.dart';
@@ -202,7 +203,10 @@ class _IncidenciaDetailScreenState extends State<IncidenciaDetailScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(inc.categoria?.icono ?? '📌', style: const TextStyle(fontSize: 30)),
+                      Hero(
+                        tag: 'cat_${inc.id}',
+                        child: Text(inc.categoria?.icono ?? '📌', style: const TextStyle(fontSize: 30, decoration: TextDecoration.none)),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
