@@ -13,6 +13,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/nivel_up_dialog.dart';
 import '../models/categoria.dart';
 import '../theme/app_theme.dart';
 
@@ -175,7 +176,6 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Animación de éxito nativa (100% fiable, sin depender de internet)
             Container(
               width: 100,
               height: 100,
@@ -185,10 +185,11 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
               ),
               child: const Icon(Icons.check, color: Colors.white, size: 60),
             )
-                .animate()
-                .scale(duration: 600.ms, curve: Curves.elasticOut)
-                .then()
-                .shimmer(duration: 1.seconds),
+              .animate()
+              .scale(duration: 600.ms, curve: Curves.elasticOut)
+              .then()
+              .shimmer(duration: 1.seconds),
+            const SizedBox(height: 16),
             const Text(
               '¡Reporte Enviado!',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.secondaryColor),
@@ -200,15 +201,12 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx); // Cierra el diálogo
-              Navigator.pop(context); // Vuelve a la pantalla principal
-            },
+            onPressed: () => Navigator.pop(ctx),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.secondaryColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('VOLVER AL INICIO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text('GENIAL', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -226,9 +224,9 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final token = context.read<AuthProvider>().token;
+      final auth = context.read<AuthProvider>();
       await _apiService.crearIncidencia(
-        token!,
+        auth.token!,
         _tituloController.text,
         _descripcionController.text,
         _selectedLocation.latitude,
@@ -237,6 +235,10 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
         _imageFiles.map((f) => f.path).toList(),
         _videoFile?.path,
       );
+
+      // Actualizar puntos históricos en el provider
+      auth.actualizarPuntos((auth.usuario?.puntos ?? 0) + 1);
+
       if (mounted) {
         await _showSuccessDialog();
         if (mounted) context.pop();
