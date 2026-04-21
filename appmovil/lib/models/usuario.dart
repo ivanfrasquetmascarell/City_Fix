@@ -3,12 +3,14 @@ class Usuario {
   final String nombre;
   final String email;
   final String rol;
+  final int puntos;
 
   Usuario({
     required this.id,
     required this.nombre,
     required this.email,
     required this.rol,
+    required this.puntos,
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class Usuario {
       nombre: json['nombre'],
       email: json['email'],
       rol: json['rol'],
+      puntos: json['puntos'] ?? 0,
     );
   }
 }

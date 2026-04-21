@@ -16,6 +16,7 @@ model Usuario {
   email        String       @unique
   password     String
   rol          Rol          @default(ciudadano)
+  puntos       Int          @default(0)
   createdAt    DateTime     @default(now())
   incidencias  Incidencia[]
 
@@ -77,4 +78,26 @@ enum Estado {
   pendiente
   en_curso
   resuelto
+}
+
+model Anuncio {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  descripcion String
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  @@map("anuncios")
+}
+
+model Contacto {
+  id           Int      @id @default(autoincrement())
+  telefono     String?
+  email        String?
+  direccion    String?
+  horario      String?
+  web          String?
+  updatedAt    DateTime @updatedAt
+
+  @@map("contacto")
 }

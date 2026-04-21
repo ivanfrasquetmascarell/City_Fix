@@ -103,6 +103,12 @@ const crear = async (req, res) => {
         multimedia: true,
       },
     });
+    
+    // INCREMENTAR PUNTOS DEL USUARIO (Gamificación Persistente)
+    await prisma.usuario.update({
+      where: { id: req.usuario.id },
+      data: { puntos: { increment: 1 } }
+    });
 
     res.status(201).json(incidencia);
   } catch (err) {
