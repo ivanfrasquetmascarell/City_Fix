@@ -94,29 +94,58 @@ class PortadaPuebloScreen extends StatelessWidget {
                   
                   const Spacer(),
                   
-                  // BOTÓN DE ACCIÓN
-                  SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.push('/incidencias'),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                  // BOTONES DE ACCIÓN
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push('/noticias'),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          icon: const Icon(Icons.newspaper, color: AppTheme.primaryColor),
+                          label: const Text(
+                            'ÚLTIMAS NOTICIAS',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
                         ),
-                        elevation: 5,
-                      ),
-                      icon: const Icon(Icons.list_alt, color: Colors.white),
-                      label: const Text(
-                        'CONSULTAR MIS INCIDENCIAS',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      ).animate().fadeIn(delay: 900.ms).moveY(begin: 30, end: 0),
+                      
+                      const SizedBox(height: 16),
+                      
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: ElevatedButton.icon(
+                          onPressed: () => context.push('/incidencias'),
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            elevation: 5,
+                          ),
+                          icon: const Icon(Icons.list_alt, color: Colors.white),
+                          label: const Text(
+                            'CONSULTAR MIS INCIDENCIAS',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ).animate().fadeIn(delay: 1000.ms).moveY(begin: 30, end: 0),
+                      ).animate().fadeIn(delay: 1100.ms).moveY(begin: 30, end: 0),
+                    ],
+                  ),
                   
                   const SizedBox(height: 30),
                 ],

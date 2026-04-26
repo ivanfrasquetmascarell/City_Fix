@@ -11,6 +11,8 @@ import 'screens/home_screen.dart';
 import 'screens/portada_pueblo_screen.dart';
 import 'screens/crear_incidencia_screen.dart';
 import 'screens/incidencia_detail_screen.dart';
+import 'screens/noticias_screen.dart';
+import 'screens/contacto_screen.dart';
 
 void main() {
   runApp(
@@ -69,6 +71,14 @@ final _router = GoRouter(
         final incidencia = state.extra as Incidencia;
         return IncidenciaDetailScreen(incidencia: incidencia);
       },
+    ),
+    GoRoute(
+      path: '/noticias',
+      builder: (context, state) => const NoticiasScreen(),
+    ),
+    GoRoute(
+      path: '/contacto',
+      builder: (context, state) => const ContactoScreen(),
     ),
   ],
 );
