@@ -138,4 +138,56 @@ class ApiService {
       throw Exception(error);
     }
   }
+
+  // --- NOTICIAS / ANUNCIOS ---
+  Future<List<dynamic>> getAnuncios() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/anuncios'));
+      if (response.statusCode == 200) {
+        List<dynamic> list = json.decode(response.body);
+        // Corregir URLs de localhost para que se vean en el móvil
+        return list.map((a) => _fixAnuncioUrls(a)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error al obtener anuncios: $e');
+      return [];
+    }
+  }
+
+  // Corrige las URLs de un anuncio y su multimedia
+  dynamic _fixAnuncioUrls(dynamic a) {
+    if (a['imageUrl'] != null) {
+      a['imageUrl'] = _fixUrl(a['imageUrl']);
+    }
+    if (a['multimedia'] != null) {
+      for (var m in a['multimedia']) {
+        m['url'] = _fixUrl(m['url']);
+      }
+    }
+    return a;
+  }
+
+  // Reemplaza localhost/127.0.0.1 por la IP real del servidor
+  String _fixUrl(String url) {
+    if (url.contains('localhost') || url.contains('127.0.0.1')) {
+      final serverIp = Uri.parse(baseUrl).host;
+      return url.replaceAll('localhost', serverIp).replaceAll('127.0.0.1', serverIp);
+    }
+    return url;
+  }
+
+  // --- CONTACTO INSTITUCIONAL ---
+  Future<Map<String, dynamic>> getContacto() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/contacto'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return {};
+    } catch (e) {
+      print('Error al obtener contacto: $e');
+      return {};
+    }
+  }
 }

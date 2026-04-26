@@ -55,11 +55,13 @@ model Incidencia {
 }
 
 model Multimedia {
-  id           Int        @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   url          String
-  tipo         TipoMedia  @default(IMAGEN)
-  incidencia   Incidencia @relation(fields: [incidenciaId], references: [id], onDelete: Cascade)
-  incidenciaId Int
+  tipo         TipoMedia   @default(IMAGEN)
+  incidencia   Incidencia? @relation(fields: [incidenciaId], references: [id], onDelete: Cascade)
+  incidenciaId Int?
+  anuncio      Anuncio?    @relation(fields: [anuncioId], references: [id], onDelete: Cascade)
+  anuncioId    Int?
 
   @@map("multimedia")
 }
@@ -81,11 +83,13 @@ enum Estado {
 }
 
 model Anuncio {
-  id          Int      @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   titulo      String
   descripcion String
   imageUrl    String?
-  createdAt   DateTime @default(now())
+  links       Json         @default("[]")
+  multimedia  Multimedia[]
+  createdAt   DateTime     @default(now())
 
   @@map("anuncios")
 }
