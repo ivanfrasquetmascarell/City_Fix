@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -222,9 +223,28 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
     try {
       final auth = context.read<AuthProvider>();
+      
+      // Obtener dirección de texto
+      String? direccionTexto;
+      try {
+        // Forzamos el idioma español para la dirección
+        await setLocaleIdentifier('es_ES');
+        List<Placemark> placemarks = await placemarkFromCoordinates(
+          _selectedLocation.latitude, 
+          _selectedLocation.longitude
+        );
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          // Construimos una dirección más completa
+          direccionTexto = "${place.street}, ${place.locality} (${place.postalCode})";
+        }
+      } catch (e) {
+        print("ERROR CRÍTICO GEOCODING: $e");
+        // No bloqueamos el envío, pero informamos en consola
+      }
+
       await _apiService.crearIncidencia(
         auth.token!,
         _tituloController.text,
@@ -232,6 +252,7 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
         _selectedLocation.latitude,
         _selectedLocation.longitude,
         _categoriaSeleccionada!,
+        direccionTexto,
         _imageFiles.map((f) => f.path).toList(),
         _videoFile?.path,
       );

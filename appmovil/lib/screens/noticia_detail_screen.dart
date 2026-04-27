@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
 
 class NoticiaDetailScreen extends StatelessWidget {
   final dynamic noticia;
@@ -33,7 +34,7 @@ class NoticiaDetailScreen extends StatelessWidget {
             expandedHeight: 350,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: img != null ? Image.network(img, fit: BoxFit.cover) : Container(color: AppTheme.primaryColor),
+              background: img != null ? Image.network(ApiService.fixUrl(img), fit: BoxFit.cover) : Container(color: AppTheme.primaryColor),
             ),
             leading: IconButton(
               icon: const CircleAvatar(backgroundColor: Colors.black26, child: Icon(Icons.arrow_back, color: Colors.white)),
@@ -71,9 +72,9 @@ class NoticiaDetailScreen extends StatelessWidget {
                               child: Stack(
                                 children: [
                                   if (isVideo)
-                                    _VideoThumbnail(url: url)
+                                    _VideoThumbnail(url: ApiService.fixUrl(url))
                                   else
-                                    Image.network(url, fit: BoxFit.cover, width: 300, height: 220),
+                                    Image.network(ApiService.fixUrl(url), fit: BoxFit.cover, width: 300, height: 220),
                                   
                                   // Overlay elegante para vídeo
                                   if (isVideo)
@@ -141,7 +142,7 @@ class NoticiaDetailScreen extends StatelessWidget {
       barrierDismissible: true,
       barrierLabel: '',
       barrierColor: Colors.black.withOpacity(0.9),
-      pageBuilder: (context, anim1, anim2) => _PremiumVideoPlayer(url: url),
+      pageBuilder: (context, anim1, anim2) => _PremiumVideoPlayer(url: ApiService.fixUrl(url)),
     );
   }
 }

@@ -71,9 +71,15 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        print('DEBUG: Respuesta recibida del servidor: ${response.body}');
         final List list = jsonDecode(response.body);
-        return list.map((e) => Incidencia.fromJson(e)).toList();
+        // Corregir URLs de multimedia en las incidencias
+        return list.map((e) {
+          final inc = Incidencia.fromJson(e);
+          for (var m in inc.multimedia) {
+            m.url = fixUrl(m.url);
+          }
+          return inc;
+        }).toList();
       } else {
         print('DEBUG: Error del servidor (${response.statusCode}): ${response.body}');
         throw Exception('Fallo al obtener tus incidencias');
@@ -92,6 +98,7 @@ class ApiService {
       double latitud, 
       double longitud, 
       int categoriaId,
+      String? direccion,
       List<String> imagenesPaths,
       String? videoPath) async {
         
@@ -102,6 +109,7 @@ class ApiService {
 
     request.fields['titulo'] = titulo;
     request.fields['descripcion'] = descripcion;
+    request.fields['direccion'] = direccion ?? '';
     request.fields['latitud'] = latitud.toString();
     request.fields['longitud'] = longitud.toString();
     request.fields['categoriaId'] = categoriaId.toString();
@@ -158,20 +166,20 @@ class ApiService {
   // Corrige las URLs de un anuncio y su multimedia
   dynamic _fixAnuncioUrls(dynamic a) {
     if (a['imageUrl'] != null) {
-      a['imageUrl'] = _fixUrl(a['imageUrl']);
+      a['imageUrl'] = fixUrl(a['imageUrl']);
     }
     if (a['multimedia'] != null) {
       for (var m in a['multimedia']) {
-        m['url'] = _fixUrl(m['url']);
+        m['url'] = fixUrl(m['url']);
       }
     }
     return a;
   }
 
   // Reemplaza localhost/127.0.0.1 por la IP real del servidor
-  String _fixUrl(String url) {
+  static String fixUrl(String url) {
     if (url.contains('localhost') || url.contains('127.0.0.1')) {
-      final serverIp = Uri.parse(baseUrl).host;
+      final serverIp = Uri.parse(Constants.apiUrl).host;
       return url.replaceAll('localhost', serverIp).replaceAll('127.0.0.1', serverIp);
     }
     return url;

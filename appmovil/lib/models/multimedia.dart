@@ -2,7 +2,7 @@ enum TipoMedia { IMAGEN, VIDEO }
 
 class Multimedia {
   final int id;
-  final String url;
+  String url;
   final TipoMedia tipo;
 
   Multimedia({

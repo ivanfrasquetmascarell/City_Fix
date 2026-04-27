@@ -6,6 +6,7 @@ class Incidencia {
   final int id;
   final String titulo;
   final String descripcion;
+  final String? direccion;
   final List<Multimedia> multimedia;
   final double latitud;
   final double longitud;
@@ -18,6 +19,7 @@ class Incidencia {
     required this.id,
     required this.titulo,
     required this.descripcion,
+    this.direccion,
     required this.multimedia,
     required this.latitud,
     required this.longitud,
@@ -38,6 +40,7 @@ class Incidencia {
         id: json['id'] as int? ?? 0,
         titulo: json['titulo']?.toString() ?? 'Sin título',
         descripcion: json['descripcion']?.toString() ?? '',
+        direccion: json['direccion']?.toString(),
         multimedia: multimediaList,
         latitud: double.tryParse(json['latitud']?.toString() ?? '0') ?? 0.0,
         longitud: double.tryParse(json['longitud']?.toString() ?? '0') ?? 0.0,
