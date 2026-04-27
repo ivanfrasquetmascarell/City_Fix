@@ -6,6 +6,7 @@ class Incidencia {
   final int id;
   final String titulo;
   final String descripcion;
+  final String? direccion;
   final List<Multimedia> multimedia;
   final double latitud;
   final double longitud;
@@ -13,11 +14,13 @@ class Incidencia {
   final String? comentarioAdmin;
   final Categoria? categoria;
   final Usuario? usuario;
+  final DateTime createdAt;
 
   Incidencia({
     required this.id,
     required this.titulo,
     required this.descripcion,
+    this.direccion,
     required this.multimedia,
     required this.latitud,
     required this.longitud,
@@ -25,33 +28,26 @@ class Incidencia {
     this.comentarioAdmin,
     this.categoria,
     this.usuario,
+    required this.createdAt,
   });
 
   factory Incidencia.fromJson(Map<String, dynamic> json) {
-    try {
-      final multimediaList = (json['multimedia'] as List?)
+    return Incidencia(
+      id: json['id'],
+      titulo: json['titulo'] ?? 'Sin título',
+      descripcion: json['descripcion'] ?? '',
+      direccion: json['direccion'],
+      multimedia: (json['multimedia'] as List?)
               ?.map((m) => Multimedia.fromJson(m))
               .toList() ??
-          [];
-
-      return Incidencia(
-        id: json['id'] as int? ?? 0,
-        titulo: json['titulo']?.toString() ?? 'Sin título',
-        descripcion: json['descripcion']?.toString() ?? '',
-        multimedia: multimediaList,
-        latitud: double.tryParse(json['latitud']?.toString() ?? '0') ?? 0.0,
-        longitud: double.tryParse(json['longitud']?.toString() ?? '0') ?? 0.0,
-        estado: json['estado']?.toString() ?? 'pendiente',
-        comentarioAdmin: json['comentarioAdmin']?.toString(),
-        categoria: json['categoria'] != null 
-            ? Categoria.fromJson(json['categoria']) 
-            : null,
-        usuario: json['usuario'] != null 
-            ? Usuario.fromJson(json['usuario']) 
-            : null,
-      );
-    } catch (e) {
-      rethrow;
-    }
+          [],
+      latitud: (json['latitud'] as num).toDouble(),
+      longitud: (json['longitud'] as num).toDouble(),
+      estado: json['estado'] ?? 'pendiente',
+      comentarioAdmin: json['comentarioAdmin'],
+      categoria: json['categoria'] != null ? Categoria.fromJson(json['categoria']) : null,
+      usuario: json['usuario'] != null ? Usuario.fromJson(json['usuario']) : null,
+      createdAt: DateTime.parse(json['createdAt']),
+    );
   }
 }

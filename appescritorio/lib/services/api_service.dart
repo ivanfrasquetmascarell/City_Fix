@@ -75,6 +75,17 @@ class ApiService {
     }
   }
 
+  Future<void> eliminarIncidencia(String token, int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/incidencias/$id'),
+      headers: _headers(token),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Error al eliminar incidencia');
+    }
+  }
+
   // --- ANUNCIOS (ADMIN) ---
   Future<void> crearAnuncio({
     required String token,

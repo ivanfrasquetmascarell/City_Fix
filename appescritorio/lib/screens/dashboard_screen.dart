@@ -24,7 +24,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _loadStats() {
     final token = context.read<AuthProvider>().token;
     if (token != null) {
-      _futureStats = _apiService.getStats(token);
+      setState(() {
+        _futureStats = _apiService.getStats(token);
+      });
     }
   }
 
@@ -37,11 +39,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Panel de Control',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Panel de Control', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                    Text('Bienvenido al gestor central de City Fix', style: TextStyle(color: Colors.grey)),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: _loadStats,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('ACTUALIZAR'),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
+                ),
+              ],
             ),
-            const Text('Bienvenido al gestor central de City Fix', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 40),
             
             FutureBuilder<Map<String, dynamic>>(
@@ -59,8 +74,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     _buildStatCard('Total Incidencias', stats['total']?.toString() ?? '0', Icons.analytics, Colors.blue),
                     _buildStatCard('Pendientes', stats['pendientes']?.toString() ?? '0', Icons.warning_amber_rounded, Colors.orange),
-                    _buildStatCard('En Curso', stats['en_curso']?.toString() ?? '0', Icons.engineering_outlined, Colors.indigo),
-                    _buildStatCard('Resueltas', stats['resueltos']?.toString() ?? '0', Icons.check_circle_outline, Colors.green),
+                    _buildStatCard('En Curso', stats['enCurso']?.toString() ?? '0', Icons.engineering_outlined, Colors.indigo),
+                    _buildStatCard('Resueltas', stats['resueltas']?.toString() ?? '0', Icons.check_circle_outline, Colors.green),
                   ],
                 );
               },
