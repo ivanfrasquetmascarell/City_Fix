@@ -36,6 +36,7 @@ model Incidencia {
   id              Int      @id @default(autoincrement())
   titulo          String
   descripcion     String
+  direccion       String?
   latitud         Float
   longitud        Float
   estado          Estado   @default(pendiente)
@@ -104,4 +105,11 @@ model Contacto {
   updatedAt    DateTime @updatedAt
 
   @@map("contacto")
+}
+
+model Stats {
+  id              Int  @id @default(1)
+  totalResueltas  Int  @default(0)
+
+  @@map("stats")
 }

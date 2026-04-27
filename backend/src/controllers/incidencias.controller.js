@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const path = require('path');
 
 // GET /incidencias
 const listar = async (req, res) => {
@@ -57,7 +58,7 @@ const obtener = async (req, res) => {
 
 // POST /incidencias
 const crear = async (req, res) => {
-  const { titulo, descripcion, latitud, longitud, categoriaId } = req.body;
+  const { titulo, descripcion, direccion, latitud, longitud, categoriaId } = req.body;
 
   if (!titulo || !descripcion || !latitud || !longitud || !categoriaId) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
@@ -77,12 +78,31 @@ const crear = async (req, res) => {
         });
       }
       if (req.files.video) {
-        req.files.video.forEach((file) => {
+        const ffmpeg = require('fluent-ffmpeg');
+        for (const file of req.files.video) {
+          const thumbName = `${file.filename.split('.')[0]}-thumb.jpg`;
+          const thumbPath = path.join(__dirname, '../uploads', thumbName);
+          
+          await new Promise((resolve) => {
+            ffmpeg(file.path)
+              .screenshots({
+                timestamps: [1],
+                filename: thumbName,
+                folder: path.join(__dirname, '../uploads'),
+                size: '320x240'
+              })
+              .on('end', resolve)
+              .on('error', (err) => {
+                console.error('Error generando thumbnail:', err);
+                resolve();
+              });
+          });
+
           multimediaData.push({
             url: `/uploads/${file.filename}`,
             tipo: 'VIDEO',
           });
-        });
+        }
       }
     }
 
@@ -90,6 +110,7 @@ const crear = async (req, res) => {
       data: {
         titulo,
         descripcion,
+        direccion,
         latitud: parseFloat(latitud),
         longitud: parseFloat(longitud),
         categoriaId: parseInt(categoriaId),
@@ -164,6 +185,19 @@ const eliminar = async (req, res) => {
       }
     }
 
+    // Si era resuelta, guardar en el contador histórico (sin romper si la tabla no existe)
+    if (incidencia.estado === 'resuelto') {
+      try {
+        await prisma.stats.upsert({
+          where: { id: 1 },
+          update: { totalResueltas: { increment: 1 } },
+          create: { id: 1, totalResueltas: 1 },
+        });
+      } catch (statsErr) {
+        console.warn('Stats table not ready yet:', statsErr.message);
+      }
+    }
+
     await prisma.incidencia.delete({ where: { id } });
     res.json({ mensaje: 'Incidencia eliminada con éxito' });
   } catch (err) {
@@ -175,19 +209,30 @@ const eliminar = async (req, res) => {
 // GET /incidencias/stats  (solo admin)
 const stats = async (req, res) => {
   try {
-    const [total, pendientes, enCurso, resueltas] = await Promise.all([
+    const [total, pendientes, enCurso, resolvedActual] = await Promise.all([
       prisma.incidencia.count(),
       prisma.incidencia.count({ where: { estado: 'pendiente' } }),
       prisma.incidencia.count({ where: { estado: 'en_curso' } }),
       prisma.incidencia.count({ where: { estado: 'resuelto' } }),
     ]);
 
+    // Intentar obtener histórico (puede fallar si la tabla aún no existe)
+    let historico = 0;
+    try {
+      const statsHistorico = await prisma.stats.findUnique({ where: { id: 1 } });
+      historico = statsHistorico?.totalResueltas ?? 0;
+    } catch (statsErr) {
+      console.warn('Stats table not ready yet:', statsErr.message);
+    }
+
+    const totalResueltas = resolvedActual + historico;
+
     const porCategoria = await prisma.incidencia.groupBy({
       by: ['categoriaId'],
       _count: { id: true },
     });
 
-    res.json({ total, pendientes, enCurso, resueltas, porCategoria });
+    res.json({ total, pendientes, enCurso, resueltas: totalResueltas, porCategoria });
   } catch (err) {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
