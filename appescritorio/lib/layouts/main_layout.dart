@@ -5,6 +5,9 @@ import '../theme/app_theme.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/incidencias_screen.dart';
 import '../screens/anuncios_screen.dart';
+import '../screens/usuarios_screen.dart';
+import '../screens/categorias_screen.dart';
+import '../screens/configuracion_screen.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -20,6 +23,9 @@ class _MainLayoutState extends State<MainLayout> {
     const DashboardScreen(),
     const IncidenciasScreen(),
     const AnunciosScreen(),
+    const UsuariosScreen(),
+    const CategoriasScreen(),
+    const ConfiguracionScreen(),
   ];
 
   @override
@@ -48,6 +54,9 @@ class _MainLayoutState extends State<MainLayout> {
                 _buildNavItem(0, Icons.dashboard_outlined, 'Dashboard'),
                 _buildNavItem(1, Icons.list_alt_outlined, 'Incidencias'),
                 _buildNavItem(2, Icons.newspaper_outlined, 'Noticias'),
+                _buildNavItem(3, Icons.people_outline, 'Ciudadanos'),
+                _buildNavItem(4, Icons.category_outlined, 'Categorías'),
+                _buildNavItem(5, Icons.settings_outlined, 'Configuración'),
                 
                 const Spacer(),
                 

@@ -213,4 +213,102 @@ class ApiService {
       throw Exception('Error al actualizar anuncio');
     }
   }
+
+  Future<List<dynamic>> getUsuarios(String token) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/auth/usuarios'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Error al obtener usuarios');
+    }
+  }
+
+  Future<List<dynamic>> getCategorias() async {
+    final response = await http.get(Uri.parse('$baseUrl/categorias'));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Error al obtener categorías');
+    }
+  }
+
+  Future<void> resetearPuntos(String token, int userId) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/auth/usuarios/$userId/reset-puntos'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) throw Exception('Error al resetear puntos');
+  }
+
+  Future<void> cambiarEstadoBloqueo(String token, int userId, bool bloqueado) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/auth/usuarios/$userId/bloqueo'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'bloqueado': bloqueado}),
+    );
+    if (response.statusCode != 200) throw Exception('Error al cambiar bloqueo');
+  }
+
+  Future<void> crearCategoria(String token, String nombre, String icono) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/categorias'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'nombre': nombre, 'icono': icono}),
+    );
+    if (response.statusCode != 201) throw Exception('Error al crear categoría');
+  }
+
+  Future<void> actualizarCategoria(String token, int id, String nombre, String icono) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/categorias/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'nombre': nombre, 'icono': icono}),
+    );
+    if (response.statusCode != 200) throw Exception('Error al actualizar categoría');
+  }
+
+  Future<void> eliminarCategoria(String token, int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/categorias/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      final data = json.decode(response.body);
+      throw Exception(data['error'] ?? 'Error al eliminar categoría');
+    }
+  }
+
+  Future<Map<String, dynamic>> getContacto() async {
+    final response = await http.get(Uri.parse('$baseUrl/contacto'));
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al obtener contacto');
+    }
+  }
+
+  Future<void> actualizarContacto(String token, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/contacto'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+    if (response.statusCode != 200) throw Exception('Error al actualizar contacto');
+  }
 }

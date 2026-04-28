@@ -15,6 +15,16 @@ class ApiService {
     };
   }
 
+  // Verifica si la respuesta es un error de baneo o token expirado
+  void _checkResponse(http.Response response) {
+    if (response.statusCode == 403) {
+      final data = jsonDecode(response.body);
+      if (data['error'] != null && data['error'].toString().contains('suspendida')) {
+        throw Exception('BANNED:${data['error']}');
+      }
+    }
+  }
+
   // Auth: Login
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(

@@ -135,4 +135,15 @@ class AuthProvider with ChangeNotifier {
     await prefs.remove(Constants.userKey);
     notifyListeners();
   }
+
+  // Utilidad para limpiar el mensaje de error de baneo
+  String? checkBannedError(dynamic e) {
+    final errorStr = e.toString();
+    if (errorStr.contains('BANNED:')) {
+      final msg = errorStr.split('BANNED:')[1];
+      logout(); // Forzamos logout si está baneado
+      return msg;
+    }
+    return null;
+  }
 }
