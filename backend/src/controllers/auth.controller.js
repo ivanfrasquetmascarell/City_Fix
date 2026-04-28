@@ -51,9 +51,11 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
 
-    const valido = await bcrypt.compare(password, usuario.password);
-    if (!valido) {
-      return res.status(401).json({ error: 'Credenciales incorrectas' });
+    const esValido = await bcrypt.compare(password, usuario.password);
+    if (!esValido) return res.status(401).json({ error: 'Credenciales inválidas' });
+
+    if (usuario.bloqueado) {
+      return res.status(403).json({ error: 'Tu cuenta ha sido suspendida por el ayuntamiento.' });
     }
 
     const token = jwt.sign(
@@ -85,4 +87,53 @@ const me = async (req, res) => {
   }
 };
 
-module.exports = { registro, login, me };
+const listarUsuarios = async (req, res) => {
+  try {
+    const usuarios = await prisma.usuario.findMany({
+      where: { rol: 'ciudadano' },
+      orderBy: { puntos: 'desc' },
+      select: {
+        id: true,
+        nombre: true,
+        email: true,
+        puntos: true,
+        bloqueado: true,
+        rol: true,
+        createdAt: true,
+        _count: {
+          select: { incidencias: true }
+        }
+      }
+    });
+    res.json(usuarios);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener usuarios' });
+  }
+};
+
+const resetearPuntos = async (req, res) => {
+  try {
+    await prisma.usuario.update({
+      where: { id: parseInt(req.params.id) },
+      data: { puntos: 0 }
+    });
+    res.json({ mensaje: 'Puntos reseteados' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al resetear puntos' });
+  }
+};
+
+const cambiarEstadoBloqueo = async (req, res) => {
+  try {
+    const { bloqueado } = req.body;
+    await prisma.usuario.update({
+      where: { id: parseInt(req.params.id) },
+      data: { bloqueado }
+    });
+    res.json({ mensaje: bloqueado ? 'Usuario bloqueado' : 'Usuario desbloqueado' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al cambiar estado de bloqueo' });
+  }
+};
+
+module.exports = { registro, login, me, listarUsuarios, resetearPuntos, cambiarEstadoBloqueo };

@@ -17,6 +17,7 @@ model Usuario {
   password     String
   rol          Rol          @default(ciudadano)
   puntos       Int          @default(0)
+  bloqueado    Boolean      @default(false)
   createdAt    DateTime     @default(now())
   incidencias  Incidencia[]
 
