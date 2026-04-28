@@ -227,9 +227,19 @@ const stats = async (req, res) => {
 
     const totalResueltas = resolvedActual + historico;
 
-    const porCategoria = await prisma.incidencia.groupBy({
+    // Obtener desglose por categorías con NOMBRES
+    const porCategoriaRaw = await prisma.incidencia.groupBy({
       by: ['categoriaId'],
       _count: { id: true },
+    });
+
+    const categorias = await prisma.categoria.findMany();
+    const porCategoria = porCategoriaRaw.map(item => {
+      const cat = categorias.find(c => c.id === item.categoriaId);
+      return {
+        nombre: cat ? cat.nombre : 'Sin categoría',
+        cantidad: item._count.id
+      };
     });
 
     res.json({ total, pendientes, enCurso, resueltas: totalResueltas, porCategoria });
