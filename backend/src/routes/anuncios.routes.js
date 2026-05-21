@@ -5,15 +5,7 @@ const path = require('path');
 const { authMiddleware, soloAdmin } = require('../middleware/auth');
 const anunciosController = require('../controllers/anuncios.controller');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads'));
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `noticia-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({ storage });
 

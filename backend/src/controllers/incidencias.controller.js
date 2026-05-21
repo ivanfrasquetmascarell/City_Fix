@@ -65,41 +65,25 @@ const crear = async (req, res) => {
   }
 
   try {
-    // Procesar archivos
+    // Procesar archivos a Cloudinary
+    const { uploadStream } = require('../utils/cloudinary');
     const multimediaData = [];
 
     if (req.files) {
       if (req.files.imagenes) {
-        req.files.imagenes.forEach((file) => {
+        for (const file of req.files.imagenes) {
+          const result = await uploadStream(file.buffer, 'image', 'cityfix/incidencias');
           multimediaData.push({
-            url: `/uploads/${file.filename}`,
+            url: result.secure_url,
             tipo: 'IMAGEN',
           });
-        });
+        }
       }
       if (req.files.video) {
-        const ffmpeg = require('fluent-ffmpeg');
         for (const file of req.files.video) {
-          const thumbName = `${file.filename.split('.')[0]}-thumb.jpg`;
-          const thumbPath = path.join(__dirname, '../uploads', thumbName);
-          
-          await new Promise((resolve) => {
-            ffmpeg(file.path)
-              .screenshots({
-                timestamps: [1],
-                filename: thumbName,
-                folder: path.join(__dirname, '../uploads'),
-                size: '320x240'
-              })
-              .on('end', resolve)
-              .on('error', (err) => {
-                console.error('Error generando thumbnail:', err);
-                resolve();
-              });
-          });
-
+          const result = await uploadStream(file.buffer, 'video', 'cityfix/incidencias');
           multimediaData.push({
-            url: `/uploads/${file.filename}`,
+            url: result.secure_url,
             tipo: 'VIDEO',
           });
         }

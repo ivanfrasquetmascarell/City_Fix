@@ -1,34 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const path = require('path');
-const fs = require('fs');
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const ffmpeg = require('fluent-ffmpeg');
-ffmpeg.setFfmpegPath(ffmpegPath);
-
-// Función auxiliar para generar miniatura
-const generarThumbnail = (videoPath, filename) => {
-  return new Promise((resolve, reject) => {
-    const thumbName = filename.replace(/\.[^/.]+$/, "") + "-thumb.jpg";
-    const thumbPath = path.join(__dirname, '../uploads');
-    
-    ffmpeg(videoPath)
-      .screenshots({
-        timestamps: ['00:00:01'],
-        filename: thumbName,
-        folder: thumbPath,
-        size: '320x?'
-      })
-      .on('end', () => {
-        console.log('Thumbnail generado:', thumbName);
-        resolve(thumbName);
-      })
-      .on('error', (err) => {
-        console.error('Error generando thumbnail:', err);
-        resolve(null); // No bloqueamos si falla
-      });
-  });
-};
+const { uploadStream } = require('../utils/cloudinary');
 
 exports.listarAnuncios = async (req, res) => {
   try {
@@ -48,16 +20,24 @@ exports.crearAnuncio = async (req, res) => {
     const { titulo, descripcion, links } = req.body;
     const portadaFile = req.files['portada'] ? req.files['portada'][0] : null;
     const extraFiles = req.files['multimedia'] || [];
-    const host = req.get('host');
-    const imageUrl = portadaFile ? `${req.protocol}://${host}/uploads/${portadaFile.filename}` : null;
+    
+    let imageUrl = null;
+    if (portadaFile) {
+      const result = await uploadStream(portadaFile.buffer, 'image', 'cityfix/anuncios');
+      imageUrl = result.secure_url;
+    }
 
-    // Generar thumbnails para vídeos
+    const multimediaData = [];
     for (const file of extraFiles) {
       const isVideo = file.mimetype.startsWith('video') || 
                       ['.mp4', '.mov', '.avi', '.webm'].some(ext => file.originalname.toLowerCase().endsWith(ext));
-      if (isVideo) {
-        await generarThumbnail(file.path, file.filename);
-      }
+      
+      const result = await uploadStream(file.buffer, isVideo ? 'video' : 'image', 'cityfix/anuncios');
+      
+      multimediaData.push({
+        url: result.secure_url,
+        tipo: isVideo ? 'VIDEO' : 'IMAGEN'
+      });
     }
 
     let linksArray = [];
@@ -72,14 +52,7 @@ exports.crearAnuncio = async (req, res) => {
         imageUrl,
         links: linksArray,
         multimedia: {
-          create: extraFiles.map(file => {
-            const isVideo = file.mimetype.startsWith('video') || 
-                            ['.mp4', '.mov', '.avi', '.webm'].some(ext => file.originalname.toLowerCase().endsWith(ext));
-            return {
-              url: `${req.protocol}://${host}/uploads/${file.filename}`,
-              tipo: isVideo ? 'VIDEO' : 'IMAGEN'
-            };
-          })
+          create: multimediaData
         }
       },
       include: { multimedia: true }
@@ -98,7 +71,6 @@ exports.actualizarAnuncio = async (req, res) => {
     const { titulo, descripcion, links, multimediaIdsToDelete } = req.body;
     const portadaFile = req.files['portada'] ? req.files['portada'][0] : null;
     const extraFiles = req.files['multimedia'] || [];
-    const host = req.get('host');
 
     if (multimediaIdsToDelete) {
       const ids = typeof multimediaIdsToDelete === 'string' ? JSON.parse(multimediaIdsToDelete) : multimediaIdsToDelete;
@@ -107,29 +79,29 @@ exports.actualizarAnuncio = async (req, res) => {
       }
     }
 
-    // Generar thumbnails para nuevos vídeos
-    for (const file of extraFiles) {
-      const isVideo = file.mimetype.startsWith('video') || 
-                      ['.mp4', '.mov', '.avi', '.webm'].some(ext => file.originalname.toLowerCase().endsWith(ext));
-      if (isVideo) {
-        await generarThumbnail(file.path, file.filename);
-      }
-    }
-
     let data = { titulo, descripcion };
-    if (portadaFile) data.imageUrl = `${req.protocol}://${host}/uploads/${portadaFile.filename}`;
+    
+    if (portadaFile) {
+      const result = await uploadStream(portadaFile.buffer, 'image', 'cityfix/anuncios');
+      data.imageUrl = result.secure_url;
+    }
+    
     if (links) data.links = typeof links === 'string' ? JSON.parse(links) : links;
 
     if (extraFiles.length > 0) {
+      const multimediaData = [];
+      for (const file of extraFiles) {
+        const isVideo = file.mimetype.startsWith('video') || 
+                        ['.mp4', '.mov', '.avi', '.webm'].some(ext => file.originalname.toLowerCase().endsWith(ext));
+        const result = await uploadStream(file.buffer, isVideo ? 'video' : 'image', 'cityfix/anuncios');
+        multimediaData.push({
+          url: result.secure_url,
+          tipo: isVideo ? 'VIDEO' : 'IMAGEN'
+        });
+      }
+      
       data.multimedia = {
-        create: extraFiles.map(file => {
-          const isVideo = file.mimetype.startsWith('video') || 
-                          ['.mp4', '.mov', '.avi', '.webm'].some(ext => file.originalname.toLowerCase().endsWith(ext));
-          return {
-            url: `${req.protocol}://${host}/uploads/${file.filename}`,
-            tipo: isVideo ? 'VIDEO' : 'IMAGEN'
-          };
-        })
+        create: multimediaData
       };
     }
 
