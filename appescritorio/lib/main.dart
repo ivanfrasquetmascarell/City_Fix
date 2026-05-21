@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:media_kit/media_kit.dart';
 import 'providers/auth_provider.dart';
+import 'providers/incidencia_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'layouts/main_layout.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   runApp(const CityFixManagerApp());
 }
 
@@ -17,6 +21,7 @@ class CityFixManagerApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => IncidenciaProvider()),
       ],
       child: MaterialApp(
         title: 'City Fix Manager',

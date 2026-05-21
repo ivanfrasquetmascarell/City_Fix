@@ -1,0 +1,15 @@
+name: shared_models
+description: Modelos compartidos para las aplicaciones de City Fix.
+version: 1.0.0
+publish_to: 'none' # Evita que se publique en pub.dev por error
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

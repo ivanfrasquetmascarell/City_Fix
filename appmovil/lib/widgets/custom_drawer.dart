@@ -22,11 +22,6 @@ class CustomDrawer extends StatelessWidget {
             width: double.infinity,
             decoration: const BoxDecoration(
               color: AppTheme.primaryColor,
-              image: DecorationImage(
-                image: NetworkImage('https://images.unsplash.com/photo-1541443131876-44b03de101c5?q=80&w=2070&auto=format&fit=crop'),
-                fit: BoxFit.cover,
-                opacity: 0.3,
-              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

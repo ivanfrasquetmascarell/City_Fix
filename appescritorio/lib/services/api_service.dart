@@ -3,8 +3,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 import '../utils/constants.dart';
-import '../models/incidencia.dart';
-import '../models/categoria.dart';
+import 'package:shared_models/shared_models.dart';
 
 class ApiService {
   final String baseUrl = Constants.apiUrl;

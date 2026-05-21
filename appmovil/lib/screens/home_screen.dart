@@ -5,8 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/incidencia_provider.dart';
 import '../services/api_service.dart';
-import '../models/incidencia.dart';
+import 'package:shared_models/shared_models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/nivel_up_dialog.dart';
@@ -19,8 +20,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final ApiService _apiService = ApiService();
-  late Future<List<Incidencia>> _futureIncidencias;
 
   @override
   void initState() {
@@ -31,8 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadData() {
     final token = context.read<AuthProvider>().token;
     if (token != null) {
-      setState(() {
-        _futureIncidencias = _apiService.getMisIncidencias(token);
+      // Pedimos al Provider que descargue las incidencias si aún no lo ha hecho
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<IncidenciaProvider>().fetchMisIncidencias(token);
       });
     }
   }
@@ -103,18 +103,17 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async => _loadData(),
-              child: FutureBuilder<List<Incidencia>>(
-                future: _futureIncidencias,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+              child: Consumer<IncidenciaProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isLoading && provider.incidencias.isEmpty) {
                     return _buildSkeleton();
                   }
 
-                  if (snapshot.hasError) {
+                  if (provider.error != null && provider.incidencias.isEmpty) {
                     return _buildErrorState();
                   }
 
-                  final allItems = snapshot.data ?? [];
+                  final allItems = provider.incidencias;
                   final filteredList = allItems.where((inc) {
                     if (_filtroEstado == null) return true;
                     return inc.estado == _filtroEstado;

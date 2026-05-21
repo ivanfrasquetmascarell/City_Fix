@@ -15,7 +15,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/nivel_up_dialog.dart';
-import '../models/categoria.dart';
+import 'package:shared_models/shared_models.dart';
 import '../theme/app_theme.dart';
 
 class CrearIncidenciaScreen extends StatefulWidget {

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
-import '../models/incidencia.dart';
-import '../models/multimedia.dart';
+import 'package:shared_models/shared_models.dart';
 import '../theme/app_theme.dart';
 import '../utils/constants.dart';
+import '../providers/incidencia_provider.dart';
 
 class IncidenciasScreen extends StatefulWidget {
   const IncidenciasScreen({super.key});
@@ -18,8 +19,13 @@ class IncidenciasScreen extends StatefulWidget {
 
 class _IncidenciasScreenState extends State<IncidenciasScreen> {
   final ApiService _apiService = ApiService();
-  late Future<List<Incidencia>> _futureIncidencias;
   Incidencia? _selectedIncidencia;
+
+  // Filtros y Búsqueda
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedStatus = 'todas';
+  bool _hideResolved = false;
 
   @override
   void initState() {
@@ -27,11 +33,19 @@ class _IncidenciasScreenState extends State<IncidenciasScreen> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _loadData() {
     final token = context.read<AuthProvider>().token;
     if (token != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<IncidenciaProvider>().fetchTodasLasIncidencias(token);
+      });
       setState(() {
-        _futureIncidencias = _apiService.getTodasLasIncidencias(token);
         _selectedIncidencia = null; 
       });
     }
@@ -53,13 +67,16 @@ class _IncidenciasScreenState extends State<IncidenciasScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Gestión de Incidencias', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-                          Text('Revisa y gestiona los reportes de los ciudadanos', style: TextStyle(color: Colors.grey)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Gestión de Incidencias', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                            const Text('Revisa y gestiona los reportes de los ciudadanos', style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 16),
                       ElevatedButton.icon(
                         onPressed: _loadData,
                         icon: const Icon(Icons.refresh),
@@ -68,16 +85,123 @@ class _IncidenciasScreenState extends State<IncidenciasScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
+                  
+                  // BÚSQUEDA Y FILTROS
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Barra de búsqueda
+                        TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Buscar por título de incidencia o nombre de ciudadano...',
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: _searchQuery.isNotEmpty 
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear), 
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  }
+                                )
+                              : null,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                          ),
+                          onChanged: (val) => setState(() => _searchQuery = val),
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Filtros de estado
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              const Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 8),
+                              SegmentedButton<String>(
+                                segments: const [
+                                  ButtonSegment(value: 'todas', label: Text('Todas')),
+                                  ButtonSegment(value: 'pendiente', label: Text('Pendientes')),
+                                  ButtonSegment(value: 'en_curso', label: Text('En Curso')),
+                                  ButtonSegment(value: 'resuelto', label: Text('Resueltas')),
+                                ],
+                                selected: {_selectedStatus},
+                                onSelectionChanged: (Set<String> newSelection) {
+                                  setState(() => _selectedStatus = newSelection.first);
+                                },
+                              ),
+                              const SizedBox(width: 24),
+                              
+                              // Checkbox Ocultar resueltas (Solo visible/activo en "Todas")
+                              if (_selectedStatus == 'todas')
+                                Row(
+                                  children: [
+                                    Checkbox(
+                                      value: _hideResolved,
+                                      onChanged: (val) => setState(() => _hideResolved = val ?? false),
+                                      activeColor: AppTheme.primaryColor,
+                                    ),
+                                    const Text('Ocultar resueltas'),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Expanded(
-                    child: FutureBuilder<List<Incidencia>>(
-                      future: _futureIncidencias,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                    child: Consumer<IncidenciaProvider>(
+                      builder: (context, provider, child) {
+                        if (provider.isLoading && provider.incidencias.isEmpty) {
                           return const Center(child: CircularProgressIndicator());
                         }
-                        final lista = snapshot.data ?? [];
-                        if (lista.isEmpty) return const Center(child: Text('No hay incidencias registradas.'));
+                        
+                        if (provider.error != null) {
+                           return const Center(child: Text('Error al cargar datos.'));
+                        }
+
+                        List<Incidencia> lista = provider.incidencias;
+
+                        // 1. Aplicar filtro de estado
+                        if (_selectedStatus != 'todas') {
+                          lista = lista.where((inc) => inc.estado == _selectedStatus).toList();
+                        } else if (_hideResolved) {
+                          lista = lista.where((inc) => inc.estado != 'resuelto').toList();
+                        }
+
+                        // 2. Aplicar filtro de búsqueda
+                        if (_searchQuery.isNotEmpty) {
+                          final query = _searchQuery.toLowerCase();
+                          lista = lista.where((inc) {
+                            final matchTitulo = inc.titulo.toLowerCase().contains(query);
+                            final matchUsuario = inc.usuario?.nombre.toLowerCase().contains(query) ?? false;
+                            return matchTitulo || matchUsuario;
+                          }).toList();
+                        }
+
+                        if (lista.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.search_off, size: 60, color: Colors.grey.shade400),
+                                const SizedBox(height: 16),
+                                const Text('No se encontraron resultados para los filtros actuales.'),
+                              ],
+                            )
+                          );
+                        }
 
                         return ListView.builder(
                           itemCount: lista.length,
@@ -185,6 +309,7 @@ class _IncidenciasScreenState extends State<IncidenciasScreen> {
                         itemBuilder: (context, i) {
                           final m = inc.multimedia[i];
                           final url = '${Constants.apiUrl}${m.url}';
+                          debugPrint('DEBUG: Intentando abrir vídeo/imagen en: $url');
                           
                           return GestureDetector(
                             onTap: () {
@@ -336,12 +461,25 @@ class _IncidenciasScreenState extends State<IncidenciasScreen> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.network(url, fit: BoxFit.contain),
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('CERRAR'))
-          ],
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 900, maxHeight: 800),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppBar(
+                title: const Text('Previsualización'),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: const Icon(Icons.image, color: Colors.black),
+                actions: [IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.black))],
+              ),
+              Expanded(
+                child: InteractiveViewer(
+                  child: Image.network(url, fit: BoxFit.contain),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -402,22 +540,20 @@ class _VideoPlayerDialog extends StatefulWidget {
 }
 
 class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
-  late VideoPlayerController _controller;
-  bool _initialized = false;
+  late final Player _player;
+  late final VideoController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
-        setState(() => _initialized = true);
-        _controller.play();
-      });
+    _player = Player();
+    _controller = VideoController(_player);
+    _player.open(Media(widget.url));
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _player.dispose();
     super.dispose();
   }
 
@@ -428,22 +564,30 @@ class _VideoPlayerDialogState extends State<_VideoPlayerDialog> {
       child: Container(
         width: 800,
         height: 500,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
         child: Column(
           children: [
             Expanded(
-              child: _initialized 
-                ? AspectRatio(aspectRatio: _controller.value.aspectRatio, child: VideoPlayer(_controller))
-                : const Center(child: CircularProgressIndicator()),
+              child: Video(controller: _controller),
             ),
             Container(
               color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    onPressed: () => setState(() => _controller.value.isPlaying ? _controller.pause() : _controller.play()),
-                    icon: Icon(_controller.value.isPlaying ? Icons.pause : Icons.play_arrow),
+                  StreamBuilder<bool>(
+                    stream: _player.stream.playing,
+                    builder: (context, snapshot) {
+                      final isPlaying = snapshot.data ?? false;
+                      return IconButton(
+                        onPressed: () => _player.playOrPause(),
+                        icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                      );
+                    },
                   ),
+                  const SizedBox(width: 20),
                   TextButton(onPressed: () => Navigator.pop(context), child: const Text('CERRAR'))
                 ],
               ),

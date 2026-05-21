@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/usuario.dart';
+import 'package:shared_models/shared_models.dart';
 import '../services/api_service.dart';
 import '../utils/constants.dart';
 

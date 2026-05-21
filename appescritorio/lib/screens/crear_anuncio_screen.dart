@@ -1,11 +1,11 @@
 import 'dart:typed_data';
-import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -280,9 +280,7 @@ class _CrearAnuncioScreenState extends State<CrearAnuncioScreen> {
                       ),
                     ),
                   ),
-                  // Indicador de tipo
                   if (isVideo) Positioned(bottom: 8, left: 8, child: Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(4)), child: const Icon(Icons.play_arrow, size: 12, color: Colors.white))),
-                  // Botón eliminar
                   Positioned(
                     top: 5, right: 5,
                     child: IconButton(
@@ -335,51 +333,6 @@ class _CrearAnuncioScreenState extends State<CrearAnuncioScreen> {
   }
 }
 
-class _VideoThumb extends StatefulWidget {
-  final String url;
-  const _VideoThumb({required this.url});
-  @override
-  State<_VideoThumb> createState() => _VideoThumbState();
-}
-
-class _VideoThumbState extends State<_VideoThumb> {
-  late VideoPlayerController _controller;
-  bool _ready = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
-    
-    // IMPORTANTE PARA WEB: Mute forzado para que el navegador permita la precarga
-    _controller.setVolume(0);
-    
-    _controller.initialize().then((_) {
-      if (mounted) setState(() => _ready = true);
-    }).catchError((err) {
-      if (mounted) setState(() => _error = err.toString());
-      print('VIDEO ERROR: $err');
-    });
-  }
-
-  @override
-  void dispose() { _controller.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_error != null) {
-      return Container(
-        color: Colors.red.shade50,
-        child: const Center(child: Icon(Icons.error_outline, color: Colors.red)),
-      );
-    }
-    return _ready 
-      ? VideoPlayer(_controller) 
-      : const Center(child: CircularProgressIndicator(strokeWidth: 2));
-  }
-}
-
 class _PremiumPlayer extends StatefulWidget {
   final String url;
   const _PremiumPlayer({required this.url});
@@ -388,14 +341,23 @@ class _PremiumPlayer extends StatefulWidget {
 }
 
 class _PremiumPlayerState extends State<_PremiumPlayer> {
-  late VideoPlayerController _controller;
+  late final Player _player;
+  late final VideoController _controller;
+
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))..initialize().then((_) { setState(() {}); _controller.play(); });
+    _player = Player();
+    _controller = VideoController(_player);
+    _player.open(Media(widget.url));
   }
+
   @override
-  void dispose() { _controller.dispose(); super.dispose(); }
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -404,9 +366,23 @@ class _PremiumPlayerState extends State<_PremiumPlayer> {
         alignment: Alignment.center,
         children: [
           BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), child: Container(color: Colors.black87)),
-          if (_controller.value.isInitialized) AspectRatio(aspectRatio: _controller.value.aspectRatio, child: VideoPlayer(_controller)) else const CircularProgressIndicator(),
+          Center(
+            child: SizedBox(
+              width: 800, height: 500,
+              child: Video(controller: _controller),
+            ),
+          ),
           Positioned(top: 20, right: 20, child: IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 40), onPressed: () => Navigator.pop(context))),
-          IconButton(icon: Icon(_controller.value.isPlaying ? Icons.pause_circle : Icons.play_circle, color: Colors.white, size: 80), onPressed: () => setState(() => _controller.value.isPlaying ? _controller.pause() : _controller.play())),
+          StreamBuilder<bool>(
+            stream: _player.stream.playing,
+            builder: (context, snapshot) {
+              final isPlaying = snapshot.data ?? false;
+              return IconButton(
+                icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle, color: Colors.white, size: 80), 
+                onPressed: () => _player.playOrPause()
+              );
+            },
+          ),
         ],
       ),
     );

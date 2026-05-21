@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../utils/constants.dart';
-import '../models/incidencia.dart';
-import '../models/categoria.dart';
+import 'package:shared_models/shared_models.dart';
 
 class ApiService {
   final String baseUrl = Constants.apiUrl;

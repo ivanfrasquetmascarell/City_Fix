@@ -35,128 +35,118 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(40.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Panel de Control', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-                    Text('Bienvenido al gestor central de City Fix', style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
-                ElevatedButton.icon(
-                  onPressed: _loadStats,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('ACTUALIZAR'),
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-            
-            FutureBuilder<Map<String, dynamic>>(
-              future: _futureStats,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                
-                final stats = snapshot.data ?? {};
-                final List<dynamic> porCategoria = stats['porCategoria'] ?? [];
-                
-                return Column(
-                  children: [
-                    // RECUADROS SUPERIORES (KPIs)
-                    Wrap(
-                      spacing: 20,
-                      runSpacing: 20,
-                      children: [
-                        _buildStatCard('Total Incidencias', stats['total']?.toString() ?? '0', Icons.analytics, Colors.blue),
-                        _buildStatCard('Pendientes', stats['pendientes']?.toString() ?? '0', Icons.warning_amber_rounded, Colors.orange),
-                        _buildStatCard('En Curso', stats['enCurso']?.toString() ?? '0', Icons.engineering_outlined, Colors.indigo),
-                        _buildStatCard('Resueltas', stats['resueltas']?.toString() ?? '0', Icons.check_circle_outline, Colors.green),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // FILA DE GRÁFICOS
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // GRÁFICO DE TARTA (Categorías)
-                        Expanded(
-                          flex: 1,
-                          child: _buildChartContainer(
-                            'Distribución por Categorías',
-                            SizedBox(
-                              height: 300,
-                              child: porCategoria.isEmpty 
-                                ? const Center(child: Text('Sin datos'))
-                                : PieChart(
-                                    PieChartData(
-                                      sections: _buildPieSections(porCategoria),
-                                      centerSpaceRadius: 40,
-                                      sectionsSpace: 2,
-                                    ),
-                                  ),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _futureStats,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          final stats = snapshot.data ?? {};
+          final List<dynamic> porCategoria = stats['porCategoria'] ?? [];
+
+          // Usamos ListView para que el scroll sea nativo y no dé problemas de tamaño
+          return ListView(
+            padding: const EdgeInsets.all(40.0),
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Panel de Control', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                      Text('Bienvenido al gestor central de City Fix', style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _loadStats,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('ACTUALIZAR'),
+                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
+              
+              // RECUADROS SUPERIORES (KPIs)
+              Wrap(
+                spacing: 20,
+                runSpacing: 20,
+                children: [
+                  _buildStatCard('Total Incidencias', stats['total']?.toString() ?? '0', Icons.analytics, Colors.blue),
+                  _buildStatCard('Pendientes', stats['pendientes']?.toString() ?? '0', Icons.warning_amber_rounded, Colors.orange),
+                  _buildStatCard('En Curso', stats['enCurso']?.toString() ?? '0', Icons.engineering_outlined, Colors.indigo),
+                  _buildStatCard('Resueltas', stats['resueltas']?.toString() ?? '0', Icons.check_circle_outline, Colors.green),
+                ],
+              ),
+              
+              const SizedBox(height: 40),
+              
+              // FILA DE GRÁFICOS
+              Wrap(
+                spacing: 20,
+                runSpacing: 20,
+                children: [
+                  // GRÁFICO DE TARTA
+                  _buildChartContainer(
+                    'Distribución por Categorías',
+                    SizedBox(
+                      width: 500,
+                      height: 350,
+                      child: porCategoria.isEmpty 
+                        ? const Center(child: Text('Sin datos'))
+                        : PieChart(
+                            PieChartData(
+                              sections: _buildPieSections(porCategoria),
+                              centerSpaceRadius: 40,
+                              sectionsSpace: 2,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 20),
-                        // GRÁFICO DE BARRAS (Estados)
-                        Expanded(
-                          flex: 1,
-                          child: _buildChartContainer(
-                            'Estado de la Gestión',
-                            SizedBox(
-                              height: 300,
-                              child: BarChart(
-                                BarChartData(
-                                  alignment: BarChartAlignment.spaceAround,
-                                  maxY: (stats['total']?.toDouble() ?? 10) + 2,
-                                  barGroups: [
-                                    _buildBarGroup(0, stats['pendientes']?.toDouble() ?? 0, Colors.orange),
-                                    _buildBarGroup(1, stats['enCurso']?.toDouble() ?? 0, Colors.indigo),
-                                    _buildBarGroup(2, stats['resueltas']?.toDouble() ?? 0, Colors.green),
-                                  ],
-                                  titlesData: FlTitlesData(
-                                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                    bottomTitles: AxisTitles(
-                                      sideTitles: SideTitles(
-                                        showTitles: true,
-                                        getTitlesWidget: (val, meta) {
-                                          if (val == 0) return const Text('PEND');
-                                          if (val == 1) return const Text('CURSO');
-                                          if (val == 2) return const Text('RES');
-                                          return const Text('');
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  borderData: FlBorderData(show: false),
-                                  gridData: const FlGridData(show: false),
-                                ),
+                    ),
+                  ),
+                  // GRÁFICO DE BARRAS
+                  _buildChartContainer(
+                    'Estado de la Gestión',
+                    SizedBox(
+                      width: 500,
+                      height: 350,
+                      child: BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          maxY: (stats['total']?.toDouble() ?? 10.0) + 2.0,
+                          barGroups: [
+                            _buildBarGroup(0, stats['pendientes']?.toDouble() ?? 0.0, Colors.orange),
+                            _buildBarGroup(1, stats['enCurso']?.toDouble() ?? 0.0, Colors.indigo),
+                            _buildBarGroup(2, stats['resueltas']?.toDouble() ?? 0.0, Colors.green),
+                          ],
+                          titlesData: FlTitlesData(
+                            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (val, meta) {
+                                  if (val == 0) return const Text('PEND');
+                                  if (val == 1) return const Text('CURSO');
+                                  if (val == 2) return const Text('RES');
+                                  return const Text('');
+                                },
                               ),
                             ),
                           ),
+                          borderData: FlBorderData(show: false),
+                          gridData: const FlGridData(show: false),
                         ),
-                      ],
+                      ),
                     ),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }

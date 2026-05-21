@@ -1,0 +1,70 @@
+import 'categoria.dart';
+import 'usuario.dart';
+import 'multimedia.dart';
+
+class Incidencia {
+  final int id;
+  final String titulo;
+  final String descripcion;
+  final String? direccion;
+  final List<Multimedia> multimedia;
+  final double latitud;
+  final double longitud;
+  final String estado;
+  final String? comentarioAdmin;
+  final Categoria? categoria;
+  final Usuario? usuario;
+  final DateTime? createdAt; // Opcional para evitar errores si no viene de la API
+
+  Incidencia({
+    required this.id,
+    required this.titulo,
+    required this.descripcion,
+    this.direccion,
+    required this.multimedia,
+    required this.latitud,
+    required this.longitud,
+    required this.estado,
+    this.comentarioAdmin,
+    this.categoria,
+    this.usuario,
+    this.createdAt,
+  });
+
+  factory Incidencia.fromJson(Map<String, dynamic> json) {
+    try {
+      final multimediaList = (json['multimedia'] as List?)
+              ?.map((m) => Multimedia.fromJson(m))
+              .toList() ??
+          [];
+
+      return Incidencia(
+        id: json['id'] as int? ?? 0,
+        titulo: json['titulo']?.toString() ?? 'Sin título',
+        descripcion: json['descripcion']?.toString() ?? '',
+        direccion: json['direccion']?.toString(),
+        multimedia: multimediaList,
+        latitud: double.tryParse(json['latitud']?.toString() ?? '0') ?? 0.0,
+        longitud: double.tryParse(json['longitud']?.toString() ?? '0') ?? 0.0,
+        estado: json['estado']?.toString() ?? 'pendiente',
+        comentarioAdmin: json['comentarioAdmin']?.toString(),
+        categoria: json['categoria'] != null 
+            ? Categoria.fromJson(json['categoria']) 
+            : null,
+        usuario: json['usuario'] != null 
+            ? Usuario.fromJson(json['usuario']) 
+            : null,
+        createdAt: json['createdAt'] != null 
+            ? DateTime.tryParse(json['createdAt'].toString()) 
+            : null,
+      );
+    } catch (e, stack) {
+      print('DEBUG: Error parseando incidencia: $e');
+      print('DEBUG: Stack: $stack');
+      // En vez de crashear, devolvemos una incidencia "vacía" pero válida
+      return Incidencia(
+        id: 0, titulo: 'Error', descripcion: 'Error cargando datos', multimedia: [], latitud: 0, longitud: 0, estado: 'pendiente'
+      );
+    }
+  }
+}
