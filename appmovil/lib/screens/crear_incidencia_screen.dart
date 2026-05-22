@@ -117,6 +117,56 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
     }
   }
 
+  Future<void> _adjuntarDesdeGaleria() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Añadir Foto desde Galería'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                if (_imageFiles.length >= 3) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Máximo 3 fotos permitidas')));
+                  return;
+                }
+                final file = await _picker.pickImage(source: ImageSource.gallery);
+                if (file != null) setState(() => _imageFiles.add(file));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam),
+              title: const Text('Añadir Vídeo desde Galería'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                if (_videoFile != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Solo se permite 1 vídeo')));
+                  return;
+                }
+                final file = await _picker.pickVideo(source: ImageSource.gallery, maxDuration: const Duration(seconds: 10));
+                if (file != null) {
+                  _videoController?.dispose();
+                  _videoController = kIsWeb 
+                      ? VideoPlayerController.networkUrl(Uri.parse(file.path))
+                      : VideoPlayerController.file(File(file.path));
+                  
+                  await _videoController!.initialize();
+                  _videoController!.setLooping(true);
+                  _videoController!.play();
+
+                  setState(() => _videoFile = file);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _eliminarFoto(int index) {
     setState(() {
       _imageFiles.removeAt(index);
@@ -266,9 +316,39 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        final errorStr = e.toString().toLowerCase();
+        if (errorStr.contains('bloqueada')) {
+          context.read<AuthProvider>().logout();
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.block, color: Colors.red, size: 28),
+                  SizedBox(width: 8),
+                  Text('Cuenta Bloqueada', style: TextStyle(color: Colors.red, fontSize: 18)),
+                ],
+              ),
+              content: const Text('Tu cuenta ha sido bloqueada por el Ayuntamiento.\n\nPor motivos de seguridad, tu sesión ha sido cerrada.'),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    context.go('/login');
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: const Text('SALIR', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -393,6 +473,15 @@ class _CrearIncidenciaScreenState extends State<CrearIncidenciaScreen> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: (_imageFiles.length < 3 || _videoFile == null) ? _adjuntarDesdeGaleria : null,
+                        icon: const Icon(Icons.photo_library),
+                        label: const Text('Adjuntar desde Galería'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
                       ),
                       
                       const SizedBox(height: 24),

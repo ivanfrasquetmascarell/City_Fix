@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:share_plus/share_plus.dart';
@@ -24,7 +25,15 @@ class NoticiaDetailScreen extends StatelessWidget {
     final String desc = noticia['descripcion'] ?? '';
     final String? img = noticia['imageUrl'];
     final List<dynamic> multimedia = noticia['multimedia'] ?? [];
-    final List<dynamic> links = noticia['links'] ?? [];
+    
+    List<dynamic> links = [];
+    if (noticia['links'] is String) {
+      try {
+        links = jsonDecode(noticia['links']);
+      } catch (_) {}
+    } else if (noticia['links'] is List) {
+      links = noticia['links'];
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,

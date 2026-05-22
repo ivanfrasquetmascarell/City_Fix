@@ -308,7 +308,7 @@ class _IncidenciasScreenState extends State<IncidenciasScreen> {
                         itemCount: inc.multimedia.length,
                         itemBuilder: (context, i) {
                           final m = inc.multimedia[i];
-                          final url = '${Constants.apiUrl}${m.url}';
+                          final url = m.url.startsWith('http') ? m.url : '${Constants.apiUrl}${m.url}';
                           debugPrint('DEBUG: Intentando abrir vídeo/imagen en: $url');
                           
                           return GestureDetector(
@@ -436,14 +436,7 @@ class _IncidenciasScreenState extends State<IncidenciasScreen> {
                               child: const Text('GUARDAR GESTIÓN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                             ),
                           ),
-                          if (currentEstado == 'resuelto') ...[
-                            const SizedBox(height: 12),
-                            TextButton.icon(
-                              onPressed: () => _confirmDelete(inc.id),
-                              icon: const Icon(Icons.delete_outline, color: Colors.red),
-                              label: const Text('ELIMINAR REPORTE', style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
+
                         ],
                       );
                     }

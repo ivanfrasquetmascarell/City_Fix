@@ -35,8 +35,9 @@ class _IncidenciaDetailScreenState extends State<IncidenciaDetailScreen> {
     for (int i = 0; i < widget.incidencia.multimedia.length; i++) {
       final media = widget.incidencia.multimedia[i];
       if (media.tipo == TipoMedia.VIDEO) {
+        final videoUrl = media.url.startsWith('http') ? media.url : '${Constants.apiUrl}${media.url}';
         final controller = VideoPlayerController.networkUrl(
-          Uri.parse('${Constants.apiUrl}${media.url}'),
+          Uri.parse(videoUrl),
         )..initialize().then((_) {
             if (mounted) setState(() {});
           });
@@ -161,8 +162,9 @@ class _IncidenciaDetailScreenState extends State<IncidenciaDetailScreen> {
                             ),
                           );
                         } else {
+                          final imageUrl = media.url.startsWith('http') ? media.url : '${Constants.apiUrl}${media.url}';
                           return Image.network(
-                            '${Constants.apiUrl}${media.url}',
+                            imageUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 const Center(child: Icon(Icons.broken_image, size: 50, color: Colors.grey)),

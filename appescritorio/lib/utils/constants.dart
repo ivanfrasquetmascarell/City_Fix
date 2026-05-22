@@ -1,6 +1,6 @@
 class Constants {
-  // En escritorio/web conectamos directamente a localhost
-  static const String apiUrl = 'http://localhost:3000';
+  // URL del servidor en producción
+  static const String apiUrl = 'https://cityfix-backend-13xy.onrender.com';
 
   // Claves de persistencia
   static const String tokenKey = 'admin_token';
