@@ -30,6 +30,29 @@
     }
   ],
   "paths": {
+    "/auth/registro": {
+      "post": {
+        "summary": "Registrar ciudadano",
+        "tags": ["Autenticación"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nombre": { "type": "string", "example": "Juan Perez" },
+                  "email": { "type": "string", "example": "juan@email.com" },
+                  "password": { "type": "string", "example": "123456" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Usuario registrado" } }
+      }
+    },
     "/auth/login": {
       "post": {
         "summary": "Iniciar sesión",
@@ -42,95 +65,186 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string" },
-                  "password": { "type": "string" }
+                  "email": { "type": "string", "example": "ivanfrasquetmascarell@gmail.com" },
+                  "password": { "type": "string", "example": "123456" }
                 }
               }
             }
           }
         },
-        "responses": {
-          "200": { "description": "Token JWT generado" }
-        }
+        "responses": { "200": { "description": "Token devuelto" } }
       }
     },
     "/auth/me": {
       "get": {
         "summary": "Obtener perfil actual",
         "tags": ["Autenticación"],
-        "responses": {
-          "200": { "description": "Datos del usuario actual" }
-        }
+        "responses": { "200": { "description": "Datos del usuario" } }
+      }
+    },
+    "/auth/usuarios": {
+      "get": {
+        "summary": "Listar usuarios (Directorio)",
+        "tags": ["Usuarios"],
+        "responses": { "200": { "description": "Lista de usuarios" } }
+      }
+    },
+    "/auth/usuarios/{id}/reset-puntos": {
+      "put": {
+        "summary": "Resetear puntos a 0 (Admin)",
+        "tags": ["Usuarios"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Puntos reseteados" } }
+      }
+    },
+    "/auth/usuarios/{id}/bloqueo": {
+      "put": {
+        "summary": "Bloquear/Desbloquear usuario (Admin)",
+        "tags": ["Usuarios"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bloqueado": { "type": "boolean", "example": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Estado actualizado" } }
       }
     },
     "/incidencias/stats": {
       "get": {
         "summary": "Estadísticas globales (Admin)",
         "tags": ["Incidencias"],
-        "responses": {
-          "200": { "description": "Datos estadísticos" }
-        }
+        "responses": { "200": { "description": "Datos para el dashboard" } }
       }
     },
     "/incidencias": {
       "get": {
         "summary": "Listar todas las incidencias",
         "tags": ["Incidencias"],
-        "responses": {
-          "200": { "description": "Lista de incidencias" }
-        }
+        "responses": { "200": { "description": "Lista de incidencias" } }
       },
       "post": {
         "summary": "Crear nueva incidencia",
         "tags": ["Incidencias"],
-        "responses": {
-          "201": { "description": "Incidencia creada" }
-        }
-      }
-    },
-    "/incidencias/{id}": {
-      "get": {
-        "summary": "Obtener incidencia por ID",
-        "tags": ["Incidencias"],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-        ],
-        "responses": {
-          "200": { "description": "Detalles de la incidencia" }
-        }
-      },
-      "put": {
-        "summary": "Actualizar estado (Admin)",
-        "tags": ["Incidencias"],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-        ],
         "requestBody": {
+          "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "estado": { "type": "string", "example": "resuelto" },
-                  "comentarioAdmin": { "type": "string", "example": "Reparado hoy." }
+                  "titulo": { "type": "string" },
+                  "descripcion": { "type": "string" },
+                  "categoriaId": { "type": "integer" },
+                  "latitud": { "type": "number", "format": "float" },
+                  "longitud": { "type": "number", "format": "float" },
+                  "imagenes": { "type": "array", "items": { "type": "string", "format": "binary" } },
+                  "video": { "type": "string", "format": "binary" }
                 }
               }
             }
           }
         },
-        "responses": {
-          "200": { "description": "Estado actualizado" }
-        }
+        "responses": { "201": { "description": "Incidencia creada" } }
+      }
+    },
+    "/incidencias/{id}": {
+      "get": {
+        "summary": "Detalle de incidencia",
+        "tags": ["Incidencias"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Detalles" } }
+      },
+      "put": {
+        "summary": "Actualizar estado (Admin)",
+        "tags": ["Incidencias"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "estado": { "type": "string", "example": "en_curso" },
+                  "comentarioAdmin": { "type": "string", "example": "Reparado." }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Actualizado" } }
       },
       "delete": {
         "summary": "Eliminar incidencia",
         "tags": ["Incidencias"],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-        ],
-        "responses": {
-          "200": { "description": "Incidencia eliminada" }
-        }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Eliminado" } }
+      }
+    },
+    "/anuncios": {
+      "get": {
+        "summary": "Listar noticias",
+        "tags": ["Noticias"],
+        "security": [],
+        "responses": { "200": { "description": "Lista" } }
+      },
+      "post": {
+        "summary": "Crear noticia (Admin)",
+        "tags": ["Noticias"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "titulo": { "type": "string" },
+                  "descripcion": { "type": "string" },
+                  "portada": { "type": "string", "format": "binary" },
+                  "multimedia": { "type": "array", "items": { "type": "string", "format": "binary" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Creado" } }
+      }
+    },
+    "/anuncios/{id}": {
+      "put": {
+        "summary": "Actualizar noticia (Admin)",
+        "tags": ["Noticias"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "titulo": { "type": "string" },
+                  "descripcion": { "type": "string" },
+                  "portada": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Actualizado" } }
+      },
+      "delete": {
+        "summary": "Eliminar noticia (Admin)",
+        "tags": ["Noticias"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Eliminada" } }
       }
     },
     "/categorias": {
@@ -138,55 +252,58 @@
         "summary": "Listar categorías",
         "tags": ["Categorías"],
         "security": [],
-        "responses": {
-          "200": { "description": "Lista de categorías" }
-        }
-      }
-    },
-    "/anuncios": {
-      "get": {
-        "summary": "Listar anuncios",
-        "tags": ["Noticias"],
-        "security": [],
-        "responses": {
-          "200": { "description": "Lista de anuncios" }
-        }
+        "responses": { "200": { "description": "Lista" } }
       },
       "post": {
-        "summary": "Crear anuncio (Admin)",
-        "tags": ["Noticias"],
-        "responses": {
-          "201": { "description": "Anuncio creado" }
-        }
+        "summary": "Crear categoría (Admin)",
+        "tags": ["Categorías"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nombre": { "type": "string", "example": "Aceras" },
+                  "icono": { "type": "string", "example": "🛣️" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Creada" } }
       }
     },
     "/contacto": {
       "get": {
-        "summary": "Obtener datos de contacto",
+        "summary": "Obtener contacto",
         "tags": ["Contacto"],
         "security": [],
-        "responses": {
-          "200": { "description": "Datos de contacto del ayuntamiento" }
-        }
+        "responses": { "200": { "description": "Datos de contacto" } }
       },
       "put": {
         "summary": "Actualizar contacto (Admin)",
         "tags": ["Contacto"],
-        "responses": {
-          "200": { "description": "Datos actualizados" }
-        }
-      }
-    },
-    "/usuarios/{id}/bloquear": {
-      "put": {
-        "summary": "Bloquear usuario (Admin)",
-        "tags": ["Usuarios"],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-        ],
-        "responses": {
-          "200": { "description": "Estado de bloqueo actualizado" }
-        }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "telefono": { "type": "string" },
+                  "email": { "type": "string" },
+                  "direccion": { "type": "string" },
+                  "horario": { "type": "string" },
+                  "facebook": { "type": "string" },
+                  "twitter": { "type": "string" },
+                  "instagram": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Actualizado" } }
       }
     }
   }
