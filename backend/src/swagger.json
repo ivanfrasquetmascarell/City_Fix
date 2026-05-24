@@ -105,6 +105,19 @@
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "estado": { "type": "string", "example": "resuelto" },
+                  "comentarioAdmin": { "type": "string", "example": "Reparado hoy." }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": { "description": "Estado actualizado" }
         }
