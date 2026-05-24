@@ -12,6 +12,11 @@ const contactoRoutes = require('./routes/contacto.routes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configuración de Swagger
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 // Middlewares globales
 app.use(cors());
 app.use(express.json());

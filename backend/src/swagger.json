@@ -1,0 +1,159 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "City Fix API",
+    "version": "1.0.0",
+    "description": "API REST para la gestión de incidencias municipales."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor Local"
+    },
+    {
+      "url": "https://cityfix-backend-13xy.onrender.com",
+      "description": "Servidor Producción (Render)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "Iniciar sesión",
+        "tags": ["Autenticación"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Token JWT generado" },
+          "401": { "description": "Credenciales inválidas" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Obtener perfil actual",
+        "tags": ["Autenticación"],
+        "responses": {
+          "200": { "description": "Datos del usuario actual" }
+        }
+      }
+    },
+    "/incidencias": {
+      "get": {
+        "summary": "Listar todas las incidencias",
+        "tags": ["Incidencias"],
+        "responses": {
+          "200": { "description": "Lista de incidencias" }
+        }
+      },
+      "post": {
+        "summary": "Crear nueva incidencia",
+        "tags": ["Incidencias"],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "titulo": { "type": "string" },
+                  "descripcion": { "type": "string" },
+                  "categoriaId": { "type": "integer" },
+                  "latitud": { "type": "number" },
+                  "longitud": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Incidencia creada" }
+        }
+      }
+    },
+    "/incidencias/{id}/estado": {
+      "put": {
+        "summary": "Actualizar estado (Admin)",
+        "tags": ["Incidencias"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "estado": { "type": "string" },
+                  "comentarioAdmin": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Estado actualizado" }
+        }
+      }
+    },
+    "/anuncios": {
+      "get": {
+        "summary": "Listar noticias",
+        "tags": ["Noticias"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Lista de noticias" }
+        }
+      }
+    },
+    "/usuarios/{id}/bloquear": {
+      "put": {
+        "summary": "Bloquear/Desbloquear usuario (Admin)",
+        "tags": ["Usuarios"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bloqueado": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Usuario bloqueado/desbloqueado" }
+        }
+      }
+    }
+  }
+}
