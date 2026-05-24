@@ -50,8 +50,7 @@
           }
         },
         "responses": {
-          "200": { "description": "Token JWT generado" },
-          "401": { "description": "Credenciales inválidas" }
+          "200": { "description": "Token JWT generado" }
         }
       }
     },
@@ -61,6 +60,15 @@
         "tags": ["Autenticación"],
         "responses": {
           "200": { "description": "Datos del usuario actual" }
+        }
+      }
+    },
+    "/incidencias/stats": {
+      "get": {
+        "summary": "Estadísticas globales (Admin)",
+        "tags": ["Incidencias"],
+        "responses": {
+          "200": { "description": "Datos estadísticos" }
         }
       }
     },
@@ -75,83 +83,96 @@
       "post": {
         "summary": "Crear nueva incidencia",
         "tags": ["Incidencias"],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "titulo": { "type": "string" },
-                  "descripcion": { "type": "string" },
-                  "categoriaId": { "type": "integer" },
-                  "latitud": { "type": "number" },
-                  "longitud": { "type": "number" }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "201": { "description": "Incidencia creada" }
         }
       }
     },
-    "/incidencias/{id}/estado": {
+    "/incidencias/{id}": {
+      "get": {
+        "summary": "Obtener incidencia por ID",
+        "tags": ["Incidencias"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Detalles de la incidencia" }
+        }
+      },
       "put": {
         "summary": "Actualizar estado (Admin)",
         "tags": ["Incidencias"],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "estado": { "type": "string" },
-                  "comentarioAdmin": { "type": "string" }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": { "description": "Estado actualizado" }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar incidencia",
+        "tags": ["Incidencias"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Incidencia eliminada" }
+        }
+      }
+    },
+    "/categorias": {
+      "get": {
+        "summary": "Listar categorías",
+        "tags": ["Categorías"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Lista de categorías" }
         }
       }
     },
     "/anuncios": {
       "get": {
-        "summary": "Listar noticias",
+        "summary": "Listar anuncios",
         "tags": ["Noticias"],
         "security": [],
         "responses": {
-          "200": { "description": "Lista de noticias" }
+          "200": { "description": "Lista de anuncios" }
+        }
+      },
+      "post": {
+        "summary": "Crear anuncio (Admin)",
+        "tags": ["Noticias"],
+        "responses": {
+          "201": { "description": "Anuncio creado" }
+        }
+      }
+    },
+    "/contacto": {
+      "get": {
+        "summary": "Obtener datos de contacto",
+        "tags": ["Contacto"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Datos de contacto del ayuntamiento" }
+        }
+      },
+      "put": {
+        "summary": "Actualizar contacto (Admin)",
+        "tags": ["Contacto"],
+        "responses": {
+          "200": { "description": "Datos actualizados" }
         }
       }
     },
     "/usuarios/{id}/bloquear": {
       "put": {
-        "summary": "Bloquear/Desbloquear usuario (Admin)",
+        "summary": "Bloquear usuario (Admin)",
         "tags": ["Usuarios"],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "bloqueado": { "type": "boolean" }
-                }
-              }
-            }
-          }
-        },
         "responses": {
-          "200": { "description": "Usuario bloqueado/desbloqueado" }
+          "200": { "description": "Estado de bloqueo actualizado" }
         }
       }
     }
