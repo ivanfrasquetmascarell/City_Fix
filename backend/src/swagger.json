@@ -291,13 +291,11 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "telefono": { "type": "string" },
-                  "email": { "type": "string" },
-                  "direccion": { "type": "string" },
-                  "horario": { "type": "string" },
-                  "facebook": { "type": "string" },
-                  "twitter": { "type": "string" },
-                  "instagram": { "type": "string" }
+                  "telefono": { "type": "string", "example": "+34 962 95 94 00" },
+                  "email": { "type": "string", "example": "ajuntament@gandia.org" },
+                  "direccion": { "type": "string", "example": "Carrer de la Vila, 1" },
+                  "horario": { "type": "string", "example": "Lunes a Viernes: 09:00 - 14:00" },
+                  "web": { "type": "string", "example": "https://www.gandia.es" }
                 }
               }
             }
