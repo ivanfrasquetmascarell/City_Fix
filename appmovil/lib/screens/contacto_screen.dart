@@ -174,7 +174,7 @@ class _ContactoScreenState extends State<ContactoScreen> {
         ),
         subtitle: Text(
           value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
       ),

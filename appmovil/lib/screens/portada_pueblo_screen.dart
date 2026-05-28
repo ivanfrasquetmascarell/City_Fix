@@ -87,7 +87,7 @@ class PortadaPuebloScreen extends StatelessWidget {
                     'Gandía es una ciudad comprometida con sus ciudadanos. A través de City Fix, trabajamos juntos para mantener nuestras calles, parques e infraestructuras en perfecto estado. Gracias por ayudarnos a mejorar.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade700,
+                      color: Colors.white,
                       height: 1.6,
                     ),
                   ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1),
